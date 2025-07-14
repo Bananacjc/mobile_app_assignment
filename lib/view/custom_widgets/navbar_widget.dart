@@ -1,51 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/utils/screen_size.dart';
 
-class NavItem {
-  final String label;
-  final Icon icon;
+class NavbarWidget extends StatefulWidget {
+  const NavbarWidget({super.key});
 
-  NavItem({required this.label, required this.icon});
+  @override
+  State<NavbarWidget> createState() => _NavbarWidgetState();
 }
 
-class NavbarWidget extends StatelessWidget {
-  final int currentIndex;
-  final Function(int) onTap;
+class _NavbarWidgetState extends State<NavbarWidget> {
+  int _currentIndex = 1;
 
-  const NavbarWidget({
-    super.key,
-    required this.currentIndex,
-    required this.onTap,
-  });
+  final List<Widget> _pages = [
+    Center(child: Text('Service', style: GoogleFonts.inter(fontSize: 24))),
+    Center(child: Text('Home', style: GoogleFonts.inter(fontSize: 24))),
+    Center(child: Text('Profile', style: GoogleFonts.inter(fontSize: 24))),
+  ];
+
+  void _onTap(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    double h, w;
-    h = ScreenSize.height(context);
-    w = ScreenSize.width(context);
-
-    final List<Map<String, NavItem>> navItems = [
-      {'service': NavItem(label: 'Service', icon: Icon(Icons.build_outlined))},
-      {'home': NavItem(label: '', icon: Icon(Icons.house_outlined))},
-      {
-        'profile': NavItem(
-          label: 'Profile',
-          icon: Icon(Icons.account_circle_outlined),
-        ),
-      },
-    ];
-
-    return SafeArea(
-      child: Container(
-        width: w,
-        height: 80,
-        decoration: BoxDecoration(color: AppColor.softWhite),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          crossAxisAlignment: CrossAxisAlignment.center,
-        ),
+    return Scaffold(
+      body: _pages[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: _onTap,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.build), label: 'Service'),
+          BottomNavigationBarItem(icon: Icon(Icons.house), label: 'Home'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_circle),
+            label: 'Profile',
+          ),
+        ],
       ),
     );
   }
