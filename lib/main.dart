@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import './core/theme/app_colors.dart';
 import './view/service_view.dart';
 import './view/home_view.dart';
@@ -14,12 +15,17 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(title: 'My Mobile Application', home: MainLayout());
+    return MaterialApp(
+      title: 'My Mobile Application',
+      home: MainLayout(title: ''),
+    );
   }
 }
 
 class MainLayout extends StatefulWidget {
-  const MainLayout({super.key});
+  final String title;
+
+  const MainLayout({super.key, required this.title});
 
   @override
   State<MainLayout> createState() => _MainLayoutState();
@@ -27,6 +33,13 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   int _currentIndex = 1;
+  String? _title;
+
+  @override
+  void initState() {
+    super.initState();
+    _title = 'Good Morning';
+  }
 
   final List<Widget> _pages = [ServiceView(), HomeView(), ProfileView()];
 
@@ -39,6 +52,7 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: Text(_title!, style: GoogleFonts.inter(fontSize: 20))),
       body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
