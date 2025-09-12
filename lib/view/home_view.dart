@@ -1,4 +1,8 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+
+import '../core/theme/app_colors.dart';
+import 'custom_widgets/navbar_widget.dart';
 
 class HomeView extends StatelessWidget {
 
@@ -6,6 +10,9 @@ class HomeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    Size size = MediaQuery.of(context).size;
+
     return Center(
       child: Text("Home View"),
     );

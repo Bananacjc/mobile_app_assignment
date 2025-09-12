@@ -1,5 +1,7 @@
 
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+
+import 'custom_widgets/navbar_widget.dart';
 
 class ServiceView extends StatelessWidget {
 
@@ -7,6 +9,8 @@ class ServiceView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Size size = MediaQuery.of(context).size;
+
     return Center(
       child: Text("Service View"),
     );

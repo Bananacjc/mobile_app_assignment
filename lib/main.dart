@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import './view/custom_widgets/navbar_widget.dart';
 import './core/theme/app_colors.dart';
 import './view/service_view.dart';
 import './view/home_view.dart';
@@ -32,16 +33,16 @@ class MainLayout extends StatefulWidget {
 }
 
 class _MainLayoutState extends State<MainLayout> {
-  int _currentIndex = 1;
+  int _currentIndex = 1; // Home
   String? _title;
+
+  final List<Widget> _pages = [ServiceView(), HomeView(), ProfileView()];
 
   @override
   void initState() {
     super.initState();
     _title = 'Good Morning';
   }
-
-  final List<Widget> _pages = [ServiceView(), HomeView(), ProfileView()];
 
   void _onTap(int index) {
     setState(() {
@@ -51,18 +52,17 @@ class _MainLayoutState extends State<MainLayout> {
 
   @override
   Widget build(BuildContext context) {
+    final Size size = MediaQuery.of(context).size;
+
     return Scaffold(
-      appBar: AppBar(title: Text(_title!, style: GoogleFonts.inter(fontSize: 20))),
-      body: _pages[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onTap,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.build), label: 'Service'),
-          BottomNavigationBarItem(icon: Icon(Icons.house), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: 'Profile'),
+      backgroundColor: AppColor.softWhite,
+      body: Stack(
+        children: [
+          Positioned.fill(child: _pages[_currentIndex]),
+          NavbarWidget(size: size, currentIndex: _currentIndex, onTap: _onTap)
         ],
-      ),
+      )
+
     );
   }
 }
