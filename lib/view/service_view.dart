@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 
-import 'custom_widgets/navbar_widget.dart';
+import '../widgets/navbar_widget.dart';
 
 class ServiceView extends StatelessWidget {
 

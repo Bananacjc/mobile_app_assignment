@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_app_assignment/view/profile_view.dart';
-import '../../core/theme/app_colors.dart';
-import '../home_view.dart';
-import '../service_view.dart';
+import '../core/theme/app_colors.dart';
+import '../view/home_view.dart';
+import '../view/service_view.dart';
 
 class NavbarWidget extends StatelessWidget {
   final Size size;

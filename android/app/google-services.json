@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "240922861367",
+    "project_id": "mobile-assignment-db",
+    "storage_bucket": "mobile-assignment-db.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:240922861367:android:f8f24e4cfe7b3cc90c84b2",
+        "android_client_info": {
+          "package_name": "jau.sdn.bhd.mobile_app_assignment"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVftvAO7bgo1qD2Sh58XMi3he3SMqusPY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
