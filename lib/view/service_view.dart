@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
-import 'widgets/navbar_widget.dart';
+import '../widgets/navbar_widget.dart';
 
 class ServiceView extends StatelessWidget {
   const ServiceView({super.key});
