@@ -24,6 +24,26 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'My Mobile Application',
+            debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primaryColor: AppColor.primaryGreen,
+        colorScheme: ColorScheme.fromSwatch().copyWith(
+          primary: AppColor.primaryGreen,
+          secondary: AppColor.accentMint,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: AppColor.primaryGreen, width: 2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          labelStyle: const TextStyle(color: AppColor.primaryGreen),
+        ),
+        textSelectionTheme: const TextSelectionThemeData(
+          cursorColor: AppColor.primaryGreen,
+          selectionColor: AppColor.primaryGreen,
+          selectionHandleColor: AppColor.primaryGreen,
+        ),
+      ),
       home: MainLayout(title: ''),
     );
   }
