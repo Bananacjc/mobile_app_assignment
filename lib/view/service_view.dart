@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app_assignment/view/payment_view.dart';
+import 'package:provider/provider.dart';
 import '../core/theme/app_colors.dart';
 import '../model/user.dart';
+import '../provider/navigation_provider.dart';
 import '../services/user_service.dart';
+import '../widgets/base_page.dart';
+import 'feedback_view.dart';
 
 class ServiceView extends StatelessWidget {
   const ServiceView({super.key});
@@ -14,6 +19,7 @@ class ServiceView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final navigationProvider = Provider.of<NavigationProvider>(context);
     // Size size = MediaQuery.of(context).size;
 
     return DefaultTabController(
@@ -297,7 +303,13 @@ class ServiceView extends StatelessWidget {
                                 ),
                                 minimumSize: Size(340, 40),
                               ),
-                              onPressed: () {},
+                              onPressed: () {
+                                navigationProvider.showFullPageContent(
+                                  BasePage(
+                                    child: PaymentView(),
+                                  )
+                                );
+                              },
                               child: Text(
                                 "View Details",
                                 style: TextStyle(color: AppColor.darkCharcoal),
@@ -358,8 +370,12 @@ class ServiceView extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 70),
           child: FloatingActionButton(
             backgroundColor: AppColor.primaryGreen,
-            onPressed: () async {
-              await addCustomer();
+            onPressed: () {
+              navigationProvider.showFullPageContent(
+                BasePage(
+                  child: FeedbackView(),
+                )
+              );
             },
             child: const Icon(Icons.add, size: 32, color: AppColor.softWhite),
           ),
