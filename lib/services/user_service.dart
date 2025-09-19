@@ -104,4 +104,16 @@ class UserService {
       rethrow;
     }
   }
+
+  Future<User?> getUser(String userId) async {
+    try{
+      final querySnapshot = await _usersCollection.doc(userId).get();
+      if(querySnapshot.exists){
+        return querySnapshot.data();
+      }
+    }catch(e) {
+      print("Error occurred in login: $e");
+    }
+    return null;
+  }
 }
