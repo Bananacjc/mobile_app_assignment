@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_app_assignment/core/theme/app_decoration.dart';
-import 'package:mobile_app_assignment/widgets/app_bar_widget.dart';
+import 'package:mobile_app_assignment/widgets/appbar_widget.dart';
 import 'package:mobile_app_assignment/widgets/app_button_widget.dart';
 import 'package:provider/provider.dart';
 import '../core/theme/app_colors.dart';

@@ -23,7 +23,7 @@ class AppButtonWidget extends StatelessWidget {
         elevation: WidgetStateProperty.all(0),
       ),
       onPressed: onPressed,
-      child: Text(text, style: GoogleFonts.inter(color: textColor ?? AppColor.softWhite, fontSize: 14, fontWeight: FontWeight.w600)),
+      child: Text(text, style: GoogleFonts.inter(color: textColor ?? AppColor.softWhite, fontSize: 16, fontWeight: FontWeight.w600)),
     );
   }
 }

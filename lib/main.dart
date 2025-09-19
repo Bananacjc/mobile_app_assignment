@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:mobile_app_assignment/model/payment.dart';
+import 'package:mobile_app_assignment/view/feedback_view.dart';
 import 'package:mobile_app_assignment/view/payment_view.dart';
 import 'firebase_options.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -32,7 +33,6 @@ class MyApp extends StatelessWidget {
 }
 
 class MainLayout extends StatelessWidget {
-
   const MainLayout({super.key});
 
   @override
@@ -40,26 +40,25 @@ class MainLayout extends StatelessWidget {
     final navigationProvider = Provider.of<NavigationProvider>(context);
     final Size size = MediaQuery.of(context).size;
 
-    final List<Widget> _pages = [ServiceView(), HomeView(), ProfileView()];
+    final List<Widget> _pages = [ServiceView(), HomeView(), FeedbackView()];
 
     return Scaffold(
       backgroundColor: AppColor.softWhite,
-      body: Stack(
-        children: [
-          // Show either the full page or the tab content
-          Positioned.fill(
-            child: navigationProvider.showFullPage
-                ? navigationProvider.fullPage!
-                : _pages[navigationProvider.currentIndex],
-          ),
-
-          // Always show navbar
-          NavbarWidget(
-            size: size,
-            currentIndex: navigationProvider.currentIndex,
-            onTap: (index) => navigationProvider.changeTab(index),
-          ),
-        ],
+      resizeToAvoidBottomInset: true,
+      bottomNavigationBar: NavbarWidget(
+        size: size,
+        currentIndex: navigationProvider.currentIndex,
+        onTap: (index) => navigationProvider.changeTab(index),
+      ),
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: Stack(
+          children: [
+            Positioned.fill(child: navigationProvider.showFullPage ? navigationProvider.fullPage! : _pages[navigationProvider.currentIndex]),
+          ],
+        ),
       ),
     );
   }
