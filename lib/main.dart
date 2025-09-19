@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'widgets/navbar_widget.dart';
 import './core/theme/app_colors.dart';
 import './view/service_view.dart';
@@ -10,6 +10,7 @@ import './view/profile_view.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -48,6 +49,7 @@ class _MainLayoutState extends State<MainLayout> {
   void initState() {
     super.initState();
     _title = 'Good Morning';
+
   }
 
   void _onTap(int index) {
@@ -61,13 +63,13 @@ class _MainLayoutState extends State<MainLayout> {
     final Size size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: AppColor.softWhite,
-      body: Stack(
-        children: [
-          Positioned.fill(child: _pages[_currentIndex]),
-          NavbarWidget(size: size, currentIndex: _currentIndex, onTap: _onTap)
-        ],
-      )
+        backgroundColor: AppColor.softWhite,
+        body: Stack(
+          children: [
+            Positioned.fill(child: _pages[_currentIndex]),
+            NavbarWidget(size: size, currentIndex: _currentIndex, onTap: _onTap)
+          ],
+        )
 
     );
   }

@@ -43,8 +43,8 @@ class VehicleService {
 
   Future<bool> updateVehicle(Vehicle vehicle) async {
     try{
-      final querySnapshot = await _vehiclesCollection.where('plateNo', isEqualTo: vehicle.plateNo).get();
-      if (querySnapshot.docs.isNotEmpty){
+      final querySnapshot = await _vehiclesCollection.doc(vehicle.plateNo).get();
+      if (querySnapshot.exists){
         await _vehiclesCollection.doc(vehicle.plateNo).set(vehicle,SetOptions(merge: true));
         return true;
       }
