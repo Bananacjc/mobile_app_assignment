@@ -40,7 +40,7 @@ class MainLayout extends StatelessWidget {
     final navigationProvider = Provider.of<NavigationProvider>(context);
     final Size size = MediaQuery.of(context).size;
 
-    final List<Widget> _pages = [ServiceView(), HomeView(), FeedbackView()];
+    final List<Widget> _pages = [ServiceView(), HomeView(), ProfileView()];
 
     return Scaffold(
       backgroundColor: AppColor.softWhite,
