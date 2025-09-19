@@ -1,3 +1,4 @@
+import 'package:bcrypt/bcrypt.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../model/user.dart';
 
@@ -19,12 +20,13 @@ class UserService {
     }
   }
 
-  Future<DocumentReference<User>> addUser(User user) async {
+  Future<DocumentReference<User>?> addUser(User user) async {
     try {
+      print("User successfully added");
       return await _usersCollection.add(user);
     } catch (e) {
       print("Error adding user: $e");
-      rethrow;
+      return null;
     }
   }
 
@@ -85,6 +87,20 @@ class UserService {
       return users;
     } catch (e) {
       print("Error fetching all users: $e");
+      rethrow;
+    }
+  }
+
+  Future<bool> userLogin(String email, String password) async {
+    try{
+      final querySnapshot = await _usersCollection.where('email', isEqualTo: email).limit(1).get();
+      if(querySnapshot.docs.isNotEmpty) {
+        final user = querySnapshot.docs.first.data();
+        return BCrypt.checkpw(password, user.password);
+      }
+      return false;
+    }catch(e) {
+      print("Error occurred in login: $e");
       rethrow;
     }
   }

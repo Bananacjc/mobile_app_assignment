@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
-import '../widgets/navbar_widget.dart';
+import '../model/user.dart';
+import '../services/user_service.dart';
 
 class ServiceView extends StatelessWidget {
   const ServiceView({super.key});
 
+  Future<void> addCustomer() async {
+    UserService users = UserService();
+    // User user = User(id: "damnniu",email:"jasonnnnn@email.com", displayName: "WURR");
+    // await users.addUser(user);
+  }
+
   @override
   Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
+    // Size size = MediaQuery.of(context).size;
 
     return DefaultTabController(
       length: 2,
@@ -45,7 +52,7 @@ class ServiceView extends StatelessWidget {
                         borderRadius: BorderRadius.circular(15),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColor.darkCharcoal.withOpacity(0.25),
+                            color: AppColor.darkCharcoal.withAlpha(63),
                             blurRadius: 10,
                             offset: const Offset(0, 0),
                           ),
@@ -87,7 +94,7 @@ class ServiceView extends StatelessWidget {
                         borderRadius: BorderRadius.circular(15),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColor.darkCharcoal.withOpacity(0.25),
+                            color: AppColor.darkCharcoal.withAlpha(63),
                             blurRadius: 10,
                             offset: const Offset(0, 0),
                           ),
@@ -129,7 +136,7 @@ class ServiceView extends StatelessWidget {
                         borderRadius: BorderRadius.circular(15),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColor.darkCharcoal.withOpacity(0.25),
+                            color: AppColor.darkCharcoal.withAlpha(63),
                             blurRadius: 10,
                             offset: const Offset(0, 0),
                           ),
@@ -176,7 +183,7 @@ class ServiceView extends StatelessWidget {
                       borderRadius: BorderRadius.circular(15),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColor.darkCharcoal.withOpacity(0.25),
+                          color: AppColor.darkCharcoal.withAlpha(63),
                           blurRadius: 10,
                           offset: const Offset(0, 0),
                         ),
@@ -262,7 +269,7 @@ class ServiceView extends StatelessWidget {
                         Divider(
                           indent: 10, // adjust later
                           endIndent: 10,
-                          color: AppColor.slateGray.withOpacity(0.25),
+                          color: AppColor.slateGray.withAlpha(63),
                           thickness: 1,
                         ),
 
@@ -311,7 +318,7 @@ class ServiceView extends StatelessWidget {
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColor.darkCharcoal.withOpacity(0.25),
+                          color: AppColor.darkCharcoal.withAlpha(63),
                           blurRadius: 10,
                           offset: const Offset(0, 0),
                         ),
@@ -351,7 +358,9 @@ class ServiceView extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 70),
           child: FloatingActionButton(
             backgroundColor: AppColor.primaryGreen,
-            onPressed: () {},
+            onPressed: () async {
+              await addCustomer();
+            },
             child: const Icon(Icons.add, size: 32, color: AppColor.softWhite),
           ),
         ),
