@@ -99,8 +99,12 @@ class UserService {
       final querySnapshot = await _usersCollection.where('email', isEqualTo: email).limit(1).get();
       if(querySnapshot.docs.isNotEmpty) {
         final user = querySnapshot.docs.first.data();
-        userDetails['success'] = BCrypt.checkpw(password, user.password);
-        userDetails['userId'] = querySnapshot.docs.first.id;
+        final verification = BCrypt.checkpw(password, user.password);
+        if(verification){
+          userDetails['success'] = verification;
+          userDetails['userId'] = querySnapshot.docs.first.id;
+        }
+
       }
     }catch(e) {
       print("Error occurred in login: $e");
