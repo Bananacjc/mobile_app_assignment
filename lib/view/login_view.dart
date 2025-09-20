@@ -5,12 +5,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../core/theme/app_colors.dart';
 import '../widgets/navbar_widget.dart';
 import 'package:mobile_app_assignment/view/register_view.dart';
-import '../model/user.dart'; // ✅ import your User model
-import 'home_view.dart';
+import '../model/user.dart'; //
+import '../main.dart';
 import '../services/user_service.dart';
 import '../services/auth_service.dart'; // ✅ Import AuthService
 import 'package:shared_preferences/shared_preferences.dart';
-
+import '../model/global_user.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -39,24 +39,32 @@ class _LoginViewState extends State<LoginView> {
     }
 
     try {
-      await _authService.signInWithEmailAndPassword(
+      final loggedInUser = await _authService.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      // ✅ Set global user
+      if (loggedInUser != null) {
+        GlobalUser.user = loggedInUser;
+        print(
+          "GlobalUser updated: UID=${GlobalUser.user!.uid}, Email=${GlobalUser.user!.email}",
+        );
+      }
 
       // ✅ Save email/password if Remember Me is checked
       final prefs = await SharedPreferences.getInstance();
       if (_rememberMe) {
         await prefs.setString('saved_email', email);
-        await prefs.setString('saved_password', password); // optional
+        await prefs.setString('saved_password', password);
       } else {
         await prefs.remove('saved_email');
         await prefs.remove('saved_password');
       }
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeView()),
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const MainLayout()),
+        (route) => false,
       );
     } on FirebaseAuthException catch (e) {
       _showMessage("Login failed: ${e.message}");
@@ -65,12 +73,16 @@ class _LoginViewState extends State<LoginView> {
 
   Future<void> _loginWithGoogle() async {
     try {
-      final user = await _authService.signInWithGoogle(); // calls AuthService
+      final user = await _authService.signInWithGoogle();
       if (user != null) {
-        // Navigate to HomeView
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeView()),
+        GlobalUser.user = user;
+        print(
+          "GlobalUser updated: UID=${GlobalUser.user!.uid}, Email=${GlobalUser.user!.email}",
+        );
+
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MainLayout()),
+          (route) => false,
         );
       } else {
         _showMessage("Google login cancelled or failed.");
@@ -81,9 +93,9 @@ class _LoginViewState extends State<LoginView> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -100,9 +112,7 @@ class _LoginViewState extends State<LoginView> {
             Container(
               width: double.infinity,
               height: size.height * 0.325,
-              decoration: const BoxDecoration(
-                color: AppColor.primaryGreen,
-              ),
+              decoration: const BoxDecoration(color: AppColor.primaryGreen),
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -303,7 +313,8 @@ class _LoginViewState extends State<LoginView> {
                     Row(
                       children: const [
                         Expanded(
-                            child: Divider(thickness: 1, color: Colors.grey)),
+                          child: Divider(thickness: 1, color: Colors.grey),
+                        ),
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 8.0),
                           child: Text(
@@ -312,7 +323,8 @@ class _LoginViewState extends State<LoginView> {
                           ),
                         ),
                         Expanded(
-                            child: Divider(thickness: 1, color: Colors.grey)),
+                          child: Divider(thickness: 1, color: Colors.grey),
+                        ),
                       ],
                     ),
 
@@ -349,7 +361,6 @@ class _LoginViewState extends State<LoginView> {
                           ],
                         ),
                       ),
-
                     ),
 
                     const SizedBox(height: 30),
@@ -369,7 +380,8 @@ class _LoginViewState extends State<LoginView> {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => const RegisterView()),
+                                builder: (context) => const RegisterView(),
+                              ),
                             );
                           },
                           child: const Text(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-
+import '../services/auth_service.dart';
+import '../model/global_user.dart';
+import '../view/login_view.dart';
 import '../core/theme/app_colors.dart';
 import '../widgets/navbar_widget.dart';
 
@@ -13,23 +15,23 @@ class ProfileView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColor.softWhite,
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(80),
-          child: AppBar(
-            title: Padding(
-              padding: EdgeInsets.only(left: 10, top: 20),
-              child: Text(
-                "User Profile",
-                style: TextStyle(
-                  color: AppColor.softWhite,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
-                ),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(80),
+        child: AppBar(
+          title: Padding(
+            padding: EdgeInsets.only(left: 10, top: 20),
+            child: Text(
+              "User Profile",
+              style: TextStyle(
+                color: AppColor.softWhite,
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
               ),
             ),
-            backgroundColor: AppColor.primaryGreen,
           ),
+          backgroundColor: AppColor.primaryGreen,
         ),
+      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -42,7 +44,9 @@ class ProfileView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColor.darkCharcoal.withOpacity(0.2), // shadow color
+                    color: AppColor.darkCharcoal.withOpacity(
+                      0.2,
+                    ), // shadow color
                     blurRadius: 12, // softness
                     spreadRadius: 2, // how wide the shadow spreads
                     offset: const Offset(0, 6), // position of shadow (x, y)
@@ -129,8 +133,56 @@ class ProfileView extends StatelessWidget {
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: () {
-                          // Handle logout
+                        onPressed: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Log out?'),
+                              content: const Text(
+                                'You will be returned to the login screen.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, true),
+                                  child: const Text('Log Out'),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (confirm != true) return;
+
+                          try {
+                            await AuthService()
+                                .signOut(); // signs out Firebase + Google
+                            GlobalUser.logout();
+
+                            if (!context.mounted) return;
+
+                            // If you are NOT using an AuthGate:
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                builder: (_) => const LoginView(),
+                              ),
+                              (route) => false,
+                            );
+
+                            // If you ARE using an AuthGate based on authStateChanges,
+                            // you can skip navigation; the stream will show LoginView automatically.
+                            // Optionally show feedback:
+                            // ScaffoldMessenger.of(context).showSnackBar(
+                            //   const SnackBar(content: Text('Logged out')),
+                            // );
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Logout failed: $e')),
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColor.primaryGreen,
@@ -153,7 +205,6 @@ class ProfileView extends StatelessWidget {
                 ],
               ),
             ),
-
             // 🔹 Footer (outside container)
             Padding(
               padding: const EdgeInsets.only(bottom: 20.0),
@@ -187,16 +238,9 @@ class ProfileView extends StatelessWidget {
     return ListTile(
       title: Text(
         title,
-        style: const TextStyle(
-          fontSize: 16,
-          color: AppColor.darkCharcoal,
-        ),
+        style: const TextStyle(fontSize: 16, color: AppColor.darkCharcoal),
       ),
-      trailing: Icon(
-        trailingIcon,
-        color: AppColor.darkCharcoal,
-        size: 20,
-      ),
+      trailing: Icon(trailingIcon, color: AppColor.darkCharcoal, size: 20),
       onTap: () {
         // Handle menu item tap
       },
