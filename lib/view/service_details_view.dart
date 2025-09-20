@@ -30,18 +30,27 @@ class ServiceDetailsView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColor.softWhite,
-      appBar: AppBar(
-        backgroundColor: AppColor.primaryGreen,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Service Details',
-          style: TextStyle(
-            color: AppColor.softWhite,
-            fontWeight: FontWeight.bold,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(80),
+        child: AppBar(
+          backgroundColor: AppColor.primaryGreen,
+          toolbarHeight: 80,
+          titleSpacing: 0,
+          leadingWidth: 56,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColor.softWhite),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Padding(
+            padding: const EdgeInsets.only(left: 10), // keep your left padding
+            child: const Text(
+              "Service Details",
+              style: TextStyle(
+                color: AppColor.softWhite,
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
+            ),
           ),
         ),
       ),
@@ -49,9 +58,6 @@ class ServiceDetailsView extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         child: Column(
           children: [
-            // TOP CARD — drop this where your old "top card" Container was.
-            // If you want the slight overlap under the AppBar like the screenshot,
-            // wrap this with: Transform.translate(offset: const Offset(0, -12), child: <this>)
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(

@@ -1,37 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_app_assignment/services/payment_service.dart';
-import 'package:mobile_app_assignment/view/custom_widgets/service_schedule_item.dart';
+import 'package:provider/provider.dart';
 import '../core/theme/app_colors.dart';
 import '../model/user.dart';
 import '../services/user_service.dart';
+import '../provider/navigation_provider.dart';
 import '../view/service_details_view.dart';
 import '../view/book_service_view.dart';
+import '../widgets/base_page.dart';
 
-class ServiceView extends StatefulWidget {
+class ServiceView extends StatelessWidget {
   const ServiceView({super.key});
+
+  Future<void> addCustomer() async {
+    UserService users = UserService();
+    // User user = User(id: "damnniu",email:"jasonnnnn@email.com", displayName: "WURR");
+    // await users.addUser(user);
+  }
 
   @override
   Widget build(BuildContext context) {
     // Size size = MediaQuery.of(context).size;
-    final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
-    return Scaffold();
-  }
-
-  @override
-  State<StatefulWidget> createState() => _ServiceViewState();
-}
-
-class _ServiceViewState extends State<ServiceView> {
-  final PaymentService paymentService = PaymentService();
-
-  @override
-  void initState() {
-    super.initState();
-
-  }
-
-  @override
-  Widget build(BuildContext context) {
+    final navigationProvider = Provider.of<NavigationProvider>(
+      context,
+      listen: false,
+    );
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -315,7 +307,8 @@ class _ServiceViewState extends State<ServiceView> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const ServiceDetailsView(),
+                                  builder: (context) =>
+                                      const ServiceDetailsView(),
                                 ),
                               );
                             },
@@ -376,15 +369,13 @@ class _ServiceViewState extends State<ServiceView> {
           ),
         ),
         floatingActionButton: Padding(
-          padding: const EdgeInsets.only(bottom: 80),
+          padding: const EdgeInsets.only(bottom: 20),
           child: FloatingActionButton(
             backgroundColor: AppColor.primaryGreen,
             onPressed: () {
               navigationProvider.showFullPageContent(
-                                BasePage(
-                                  child: PaymentView(),
-                                ),
-                              );
+                BasePage(child: BookServiceView()),
+              );
             },
             child: const Icon(Icons.add, size: 32, color: AppColor.softWhite),
           ),
@@ -393,4 +384,3 @@ class _ServiceViewState extends State<ServiceView> {
     );
   }
 }
-

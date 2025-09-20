@@ -1,4 +1,4 @@
-// providers/navigation_provider.dart
+// provider/navigation_provider.dart
 import 'package:flutter/material.dart';
 
 class NavigationProvider with ChangeNotifier {

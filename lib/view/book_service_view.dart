@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../core/theme/app_colors.dart';
+import '../provider/navigation_provider.dart';
 
 class BookServiceView extends StatefulWidget {
   const BookServiceView({super.key});
@@ -56,55 +58,67 @@ class _BookServiceViewState extends State<BookServiceView> {
     }
   }
 
-Future<void> _pickTime() async {
-  final picked = await showTimePicker(
-    context: context,
-    initialTime: TimeOfDay.now(),
-    builder: (context, child) {
-      return Theme(
-        data: Theme.of(context).copyWith(
-          timePickerTheme: const TimePickerThemeData(
-            dayPeriodColor: AppColor.accentMint,   // AM/PM background
-            dayPeriodTextColor: AppColor.darkCharcoal,  // AM/PM text
-            dayPeriodShape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(8)),
-              side: BorderSide(color: AppColor.primaryGreen),
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            timePickerTheme: const TimePickerThemeData(
+              dayPeriodColor: AppColor.accentMint, // AM/PM background
+              dayPeriodTextColor: AppColor.darkCharcoal, // AM/PM text
+              dayPeriodShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+                side: BorderSide(color: AppColor.primaryGreen),
+              ),
+            ),
+            colorScheme: const ColorScheme.light(
+              primary: AppColor.primaryGreen, // active numbers, buttons
+              onPrimary: Colors.white, // text on active bg
+              onSurface: AppColor.darkCharcoal, // inactive text
             ),
           ),
-          colorScheme: const ColorScheme.light(
-            primary: AppColor.primaryGreen,       // active numbers, buttons
-            onPrimary: Colors.white,              // text on active bg
-            onSurface: AppColor.darkCharcoal,     // inactive text
-          ),
-        ),
-        child: child!,
-      );
-    },
-  );
+          child: child!,
+        );
+      },
+    );
 
-  if (picked != null) {
-    setState(() => _selectedTime = picked);
+    if (picked != null) {
+      setState(() => _selectedTime = picked);
+    }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
+    final navigationProvider = Provider.of<NavigationProvider>(
+      context,
+      listen: false,
+    );
     return Scaffold(
       backgroundColor: AppColor.softWhite,
-      appBar: AppBar(
-        backgroundColor: AppColor.primaryGreen,
-        elevation: 0,
-        title: const Text(
-          "Book Service",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: AppColor.softWhite,
+            appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(80),
+        child: AppBar(
+          backgroundColor: AppColor.primaryGreen,
+          toolbarHeight: 80,
+          titleSpacing: 0,
+          leadingWidth: 56,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColor.softWhite),
+            onPressed: () => navigationProvider.goBack(),
           ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+          title: Padding(
+            padding: const EdgeInsets.only(left: 10), // keep your left padding
+            child: const Text(
+              "Book Service",
+              style: TextStyle(
+                color: AppColor.softWhite,
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
+            ),
+          ),
         ),
       ),
       body: SingleChildScrollView(
@@ -137,8 +151,11 @@ Future<void> _pickTime() async {
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: AppColor.wineRed, width: 2),
                     ),
-                    child: const Icon(Icons.directions_car,
-                        color: AppColor.wineRed, size: 28),
+                    child: const Icon(
+                      Icons.directions_car,
+                      color: AppColor.wineRed,
+                      size: 28,
+                    ),
                   ),
                   const SizedBox(width: 12),
 
@@ -185,14 +202,16 @@ Future<void> _pickTime() async {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 10),
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                     ),
                     onPressed: () {},
                     child: const Text(
                       "Switch",
                       style: TextStyle(color: Colors.white),
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -202,9 +221,11 @@ Future<void> _pickTime() async {
             DropdownButtonFormField<String>(
               decoration: _flatInput("Select Service Type"),
               value: _selectedService,
-              items: ["Oil Change", "Brake Service", "Tire Rotation"]
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                  .toList(),
+              items: [
+                "Oil Change",
+                "Brake Service",
+                "Tire Rotation",
+              ].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
               onChanged: (val) {
                 setState(() => _selectedService = val);
               },
