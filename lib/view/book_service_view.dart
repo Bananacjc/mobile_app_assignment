@@ -336,21 +336,13 @@ class _BookServiceViewState extends State<BookServiceView> {
                   if (!mounted) return;
 
                   if (ref != null) {
+                    // show a toast/snack first
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("Service booked!")),
                     );
 
-                    // ✅ Close using NavigationProvider (Option 2)
-                    final nav = context.read<NavigationProvider>();
-                    if (nav.showFullPage) {
-                      nav.goBack(); // closes the full-page overlay and shows your tabs again
-                    } else if (Navigator.of(context).canPop()) {
-                      // Fallback if this screen was ever opened with Navigator.push
-                      Navigator.of(context).pop();
-                    } else {
-                      // Safe fallback: go to a tab (e.g., Service tab)
-                      nav.changeTab(0);
-                    }
+                    // ✅ close using NavigationProvider (not Navigator.pop)
+                    context.read<NavigationProvider>().goBack();
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
