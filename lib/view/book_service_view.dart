@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/theme/app_colors.dart';
 import '../provider/navigation_provider.dart';
+import '../model/service.dart';
+import '../model/global_user.dart';
+import '../services/service_service.dart';
 
 class BookServiceView extends StatefulWidget {
   const BookServiceView({super.key});
@@ -97,7 +100,7 @@ class _BookServiceViewState extends State<BookServiceView> {
     );
     return Scaffold(
       backgroundColor: AppColor.softWhite,
-            appBar: PreferredSize(
+      appBar: PreferredSize(
         preferredSize: const Size.fromHeight(80),
         child: AppBar(
           backgroundColor: AppColor.primaryGreen,
@@ -217,9 +220,9 @@ class _BookServiceViewState extends State<BookServiceView> {
             ),
             const SizedBox(height: 20),
 
-            // Service Type Dropdown
+            // Service Dropdown
             DropdownButtonFormField<String>(
-              decoration: _flatInput("Select Service Type"),
+              decoration: _flatInput("Select Service"),
               value: _selectedService,
               items: [
                 "Oil Change",
@@ -289,10 +292,74 @@ class _BookServiceViewState extends State<BookServiceView> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Service booked!")),
+                onPressed: () async {
+                  if (_selectedService == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Please select a service.")),
+                    );
+                    return;
+                  }
+                  if (_selectedDate == null || _selectedTime == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Please choose date and time."),
+                      ),
+                    );
+                    return;
+                  }
+
+                  final user = GlobalUser.user;
+
+                  final appointmentDate = DateTime(
+                    _selectedDate!.year,
+                    _selectedDate!.month,
+                    _selectedDate!.day,
+                    _selectedTime!.hour,
+                    _selectedTime!.minute,
                   );
+
+                  final service = Service(
+                    serviceId: '', // will be set inside addService()
+                    userId: user!.uid,
+                    title: _selectedService!,
+                    note: _notesController.text.trim().isEmpty
+                        ? null
+                        : _notesController.text.trim(),
+                    status: 'inspection',
+                    fee: null,
+                    duration: null,
+                    appointmentDate: appointmentDate,
+                  );
+
+                  final ref = await ServiceService().addService(service);
+
+                  if (!mounted) return;
+
+                  if (ref != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Service booked!")),
+                    );
+
+                    // ✅ Close using NavigationProvider (Option 2)
+                    final nav = context.read<NavigationProvider>();
+                    if (nav.showFullPage) {
+                      nav.goBack(); // closes the full-page overlay and shows your tabs again
+                    } else if (Navigator.of(context).canPop()) {
+                      // Fallback if this screen was ever opened with Navigator.push
+                      Navigator.of(context).pop();
+                    } else {
+                      // Safe fallback: go to a tab (e.g., Service tab)
+                      nav.changeTab(0);
+                    }
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          "Failed to book service. Please try again.",
+                        ),
+                      ),
+                    );
+                  }
                 },
                 child: const Text(
                   "Book Service",

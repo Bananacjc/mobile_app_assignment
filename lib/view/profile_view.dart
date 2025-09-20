@@ -159,7 +159,6 @@ class ProfileView extends StatelessWidget {
                           try {
                             await AuthService()
                                 .signOut(); // signs out Firebase + Google
-                            GlobalUser.logout();
 
                             if (!context.mounted) return;
 

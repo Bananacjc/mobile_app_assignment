@@ -1,6 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../model/global_user.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -88,5 +91,13 @@ class AuthService {
   Future<void> signOut() async {
     await _auth.signOut();
     await GoogleSignIn().signOut();
+
+        // Clear global user
+    GlobalUser.logout();
+
+    // Clear saved credentials
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('saved_email');
+    await prefs.remove('saved_password');
   }
 }
