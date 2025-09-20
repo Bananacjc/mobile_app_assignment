@@ -17,6 +17,7 @@ class ServiceView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Size size = MediaQuery.of(context).size;
+    final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
 
     return DefaultTabController(
       length: 2,
@@ -366,12 +367,11 @@ class ServiceView extends StatelessWidget {
           child: FloatingActionButton(
             backgroundColor: AppColor.primaryGreen,
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const BookServiceView(),
-                ),
-              );
+              navigationProvider.showFullPageContent(
+                                BasePage(
+                                  child: PaymentView(),
+                                ),
+                              );
             },
             child: const Icon(Icons.add, size: 32, color: AppColor.softWhite),
           ),

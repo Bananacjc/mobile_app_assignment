@@ -111,7 +111,7 @@ Future<void> _pickTime() async {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // 🚗 Vehicle Card
+            // Vehicle Card
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -198,7 +198,7 @@ Future<void> _pickTime() async {
             ),
             const SizedBox(height: 20),
 
-            // 🔧 Service Type Dropdown
+            // Service Type Dropdown
             DropdownButtonFormField<String>(
               decoration: _flatInput("Select Service Type"),
               value: _selectedService,
@@ -211,7 +211,7 @@ Future<void> _pickTime() async {
             ),
             const SizedBox(height: 16),
 
-            // 📅 Date and Time Row
+            // Date and Time Row
             Row(
               children: [
                 Expanded(
@@ -247,7 +247,7 @@ Future<void> _pickTime() async {
             ),
             const SizedBox(height: 16),
 
-            // 📝 Notes
+            // Notes
             TextFormField(
               controller: _notesController,
               maxLines: 3,
@@ -257,7 +257,7 @@ Future<void> _pickTime() async {
             ),
             const SizedBox(height: 20),
 
-            // 📌 Book Button
+            // Book Button
             SizedBox(
               width: double.infinity,
               height: 48,
