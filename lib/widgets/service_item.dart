@@ -5,6 +5,8 @@ import 'package:mobile_app_assignment/core/tool.dart';
 import 'package:mobile_app_assignment/model/service.dart';
 import 'package:mobile_app_assignment/services/feedback_service.dart';
 import 'package:mobile_app_assignment/services/service_service.dart';
+import 'package:mobile_app_assignment/view/feedback_view.dart';
+import 'package:mobile_app_assignment/view/payment_view.dart';
 
 class ServiceItem extends StatefulWidget {
   final Service service;
@@ -30,15 +32,13 @@ class _ServiceItemState extends State<ServiceItem> {
     'service': "Service Conducting",
     'completed': "Service Completed"
   };
-  final String userId = "U001"; // use global key later
   String serviceTitle = "";
   String? topRightCornerDisplay;
   String plateNoDisplay = "N/A";
   String? middleLeftDisplay;
   String? feeDisplay;
   int buttonDisplay = 2;
-  String? buttonName;
-
+  String? buttonName = "";
 
   @override
 void initState() {
@@ -108,7 +108,7 @@ Future<bool> isFeedback(String serviceId) async { // is feedback already done
   return false;
 }
 
-Widget buttonRow() {
+Widget buttonRow(VoidCallback? action) {
     if(buttonDisplay == 2){ // pay/reschedule/feedback
       return Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -121,7 +121,7 @@ Widget buttonRow() {
               ),
               minimumSize: Size(165, 40),
             ),
-            onPressed: () {},
+            onPressed: action,
             child: Text(
               buttonName!,
               style: TextStyle(color: AppColor.softWhite),
@@ -171,6 +171,20 @@ Widget buttonRow() {
 
 @override
 Widget build(BuildContext context) {
+  final Map<String, VoidCallback> actions = {
+    "pay": () => Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => PaymentView()),
+    ),
+    // "reschedule": () => Navigator.push(
+    //   context,
+    //   MaterialPageRoute(builder: (_) => RescheduleView()),
+    // ),
+    "feedback": () => Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => FeedbackView()),
+    ),
+  };
   return Padding(
     padding: EdgeInsets.only(bottom: 20),
     child:
@@ -299,7 +313,9 @@ Widget build(BuildContext context) {
                   ),
                   Padding(
                     padding: EdgeInsets.only(top: 10),
-                    child: buttonRow(),
+                    child: buttonName != null || buttonName!.isNotEmpty
+                    ? buttonRow(actions[buttonName!.toLowerCase()])
+                        :buttonRow(null)
                   )
                 ],
               ),
