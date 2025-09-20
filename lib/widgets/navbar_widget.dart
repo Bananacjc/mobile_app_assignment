@@ -55,7 +55,7 @@ class NavbarWidget extends StatelessWidget {
               children: [
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  spacing: -8,
+                  spacing: 0,
                   children: [
                     IconButton(
                       icon: Icon(Icons.build_outlined, color: currentIndex == 0 ? AppColor.accentMint : AppColor.darkCharcoal, size: 32),
@@ -74,7 +74,7 @@ class NavbarWidget extends StatelessWidget {
                 Container(width: size.width * 0.20),
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  spacing: -8,
+                  spacing: 0,
                   children: [
                     IconButton(
                       icon: Icon(Icons.account_circle_outlined, color: currentIndex == 2 ? AppColor.accentMint : AppColor.darkCharcoal, size: 32),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:mobile_app_assignment/model/payment.dart';
 import 'package:mobile_app_assignment/view/feedback_view.dart';
 import 'package:mobile_app_assignment/view/payment_view.dart';
@@ -15,8 +17,15 @@ import 'package:provider/provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
+  await _stripeSetup();
+
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
+}
+
+Future<void> _stripeSetup() async {
+  Stripe.publishableKey = dotenv.get("STRIPE_PUBLISHABLE_KEY");
 }
 
 class MyApp extends StatelessWidget {
