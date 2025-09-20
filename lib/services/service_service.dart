@@ -57,13 +57,85 @@ class ServiceService {
     return false;
   }
 
-  Future<List<Service>> getAllServices(String userId) async {
+  Future<List<Service>> getAllActiveServices(String userId) async {
+    try {
+      DateTime now = DateTime.now();
+
+      final querySnapshot = await _servicesCollection
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        final allServices = querySnapshot.docs
+            .map((doc) => doc.data())
+            .toList();
+
+        // First filter: not completed
+        final activeServices =
+        allServices.where((s) => s.status != "completed").toList();
+
+        // Second filter: appointment already started
+        final inProgressServices = activeServices.where((s) {
+          return s.appointmentDate != null && s.appointmentDate!.isAfter(now);
+        }).toList();
+
+        print("In-Progress Services count: ${inProgressServices.length}");
+        return inProgressServices;
+      }
+    } catch (e) {
+      print("Error fetching all services: $e");
+    }
+    return [];
+  }
+
+  Future<List<Service>> getAllCompletedServices(String userId) async {
     try {
       final querySnapshot = await _servicesCollection
           .where('userId', isEqualTo: userId)
           .get();
+
       if (querySnapshot.docs.isNotEmpty) {
-        return querySnapshot.docs.map((doc) => doc.data()).toList();
+        final allServices = querySnapshot.docs
+            .map((doc) => doc.data())
+            .toList();
+
+        // Filter locally for completed
+        final completedServices =
+        allServices.where((s) => s.status == "completed").toList();
+
+        print("Completed Services count: ${completedServices.length}");
+        return completedServices;
+      }
+    } catch (e) {
+      print("Error fetching all services: $e");
+    }
+    return [];
+  }
+
+  Future<List<Service>> getInProgressServices(String userId) async {
+    try {
+      DateTime now = DateTime.now();
+
+      final querySnapshot = await _servicesCollection
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        final allServices = querySnapshot.docs
+            .map((doc) => doc.data())
+            .toList();
+
+        // First filter: not completed
+        final activeServices =
+        allServices.where((s) => s.status != "completed").toList();
+
+        // Second filter: appointment already started
+        final inProgressServices = activeServices.where((s) {
+          return s.appointmentDate != null && s.appointmentDate!.isBefore(now);
+        }).toList();
+
+        print("In-Progress Services count: ${inProgressServices.length}");
+        return inProgressServices;
       }
     } catch (e) {
       print("Error fetching all services: $e");
