@@ -8,7 +8,6 @@ import '../services/user_service.dart';
 import '../provider/navigation_provider.dart';
 import '../view/service_details_view.dart';
 import '../view/book_service_view.dart';
-import '../widgets/base_page.dart';
 import '../widgets/service_item.dart';
 
 class ServiceView extends StatefulWidget {
