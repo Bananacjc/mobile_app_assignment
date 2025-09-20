@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Service {
   final String serviceId;           // Firestore doc id
   final String userId;              // owner uid
+  final String plateNo;              // owner uid
   final String? title;
   final String? note;
   final String? status;
@@ -13,6 +14,7 @@ class Service {
   Service({
     required this.serviceId,
     required this.userId,
+    required this.plateNo,
     this.title,
     this.note,
     this.status,
@@ -31,6 +33,7 @@ class Service {
     return Service(
       serviceId: (data['serviceId'] as String?) ?? snapshot.id,
       userId: (data['userId'] as String?) ?? '',
+      plateNo: (data['plateNo'] as String?) ?? '',
       title: data['title'] as String?,
       note: data['note'] as String?,
       status: data['status'] as String?,
@@ -45,6 +48,7 @@ class Service {
     final map = <String, dynamic>{
       'serviceId': serviceId,
       'userId': userId,
+      'plateNo': userId,
     };
     if (title != null) map['title'] = title;
     if (note != null) map['note'] = note;
@@ -58,6 +62,7 @@ class Service {
   Service copyWith({
     String? serviceId,
     String? userId,
+    String? plateNo,
     String? title,
     String? note,
     String? status,
@@ -68,6 +73,7 @@ class Service {
     return Service(
       serviceId: serviceId ?? this.serviceId,
       userId: userId ?? this.userId,
+      plateNo: plateNo ?? this.plateNo,
       title: title ?? this.title,
       note: note ?? this.note,
       status: status ?? this.status,

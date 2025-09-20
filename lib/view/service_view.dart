@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_app_assignment/view/feedback_view.dart';
-import 'package:mobile_app_assignment/view/payment_view.dart';
-import 'package:mobile_app_assignment/widgets/app_button_widget.dart';
+import 'package:mobile_app_assignment/model/service.dart';
+import 'package:mobile_app_assignment/services/service_service.dart';
 import 'package:provider/provider.dart';
 import '../core/theme/app_colors.dart';
 import '../model/user.dart';
@@ -10,20 +9,55 @@ import '../provider/navigation_provider.dart';
 import '../view/service_details_view.dart';
 import '../view/book_service_view.dart';
 import '../widgets/base_page.dart';
+import '../widgets/service_item.dart';
 
-class ServiceView extends StatelessWidget {
+class ServiceView extends StatefulWidget {
   const ServiceView({super.key});
 
-  Future<void> addCustomer() async {
-    UserService users = UserService();
-    // User user = User(id: "damnniu",email:"jasonnnnn@email.com", displayName: "WURR");
-    // await users.addUser(user);
+  @override
+  State<StatefulWidget> createState() => _ServiceViewState();
+}
+
+class _ServiceViewState extends State<ServiceView> {
+  final ServiceService ss = ServiceService();
+  final String userId = "7K3cULYkj8PPQCjDrxv6drIel3b2";
+  String upcomingCount = "";
+  String inProgressCount = "";
+  String completedCount = "";
+
+  List<Service> activeServices = [];
+  List<Service> completedServices = [];
+  List<Service> inProgressServices = [];
+
+  void loadData() async {
+    final active = await ss.getAllActiveServices(userId);
+    final completed = await ss.getAllCompletedServices(userId);
+    final inProgress = await ss.getInProgressServices(userId);
+
+    setState(() {
+      activeServices = active;
+      completedServices = completed;
+      inProgressServices = inProgress;
+
+      upcomingCount = activeServices.length.toString();
+      inProgressCount = inProgressServices.length.toString();
+      completedCount = completedServices.length.toString();
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadData();
   }
 
   @override
   Widget build(BuildContext context) {
     // Size size = MediaQuery.of(context).size;
-    final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
+    final navigationProvider = Provider.of<NavigationProvider>(
+      context,
+      listen: false,
+    );
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -36,7 +70,11 @@ class ServiceView extends StatelessWidget {
               padding: EdgeInsets.only(left: 10, top: 20),
               child: Text(
                 "Service Schedule",
-                style: TextStyle(color: AppColor.softWhite, fontWeight: FontWeight.bold, fontSize: 24),
+                style: TextStyle(
+                  color: AppColor.softWhite,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                ),
               ),
             ),
             backgroundColor: AppColor.primaryGreen,
@@ -54,7 +92,13 @@ class ServiceView extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: AppColor.softWhite,
                       borderRadius: BorderRadius.circular(15),
-                      boxShadow: [BoxShadow(color: AppColor.darkCharcoal.withAlpha(63), blurRadius: 10, offset: const Offset(0, 0))],
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColor.darkCharcoal.withAlpha(63),
+                          blurRadius: 10,
+                          offset: const Offset(0, 0),
+                        ),
+                      ],
                     ),
                     width: 100,
                     height: 100,
@@ -64,12 +108,22 @@ class ServiceView extends StatelessWidget {
                         // mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text("Upcoming", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                          Text(
+                            "Upcoming",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           Padding(
                             padding: EdgeInsets.only(top: 10),
                             child: Text(
-                              "2",
-                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColor.primaryGreen),
+                              upcomingCount,
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppColor.primaryGreen,
+                              ),
                             ),
                           ),
                         ],
@@ -80,7 +134,13 @@ class ServiceView extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: AppColor.softWhite,
                       borderRadius: BorderRadius.circular(15),
-                      boxShadow: [BoxShadow(color: AppColor.darkCharcoal.withAlpha(63), blurRadius: 10, offset: const Offset(0, 0))],
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColor.darkCharcoal.withAlpha(63),
+                          blurRadius: 10,
+                          offset: const Offset(0, 0),
+                        ),
+                      ],
                     ),
                     width: 100,
                     height: 100,
@@ -90,12 +150,22 @@ class ServiceView extends StatelessWidget {
                         // mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text("In Progress", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                          Text(
+                            "In Progress",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           Padding(
                             padding: EdgeInsets.only(top: 10),
                             child: Text(
-                              "1",
-                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColor.primaryGreen),
+                              inProgressCount,
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppColor.primaryGreen,
+                              ),
                             ),
                           ),
                         ],
@@ -106,7 +176,13 @@ class ServiceView extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: AppColor.softWhite,
                       borderRadius: BorderRadius.circular(15),
-                      boxShadow: [BoxShadow(color: AppColor.darkCharcoal.withAlpha(63), blurRadius: 10, offset: const Offset(0, 0))],
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColor.darkCharcoal.withAlpha(63),
+                          blurRadius: 10,
+                          offset: const Offset(0, 0),
+                        ),
+                      ],
                     ),
                     width: 100,
                     height: 100,
@@ -116,12 +192,22 @@ class ServiceView extends StatelessWidget {
                         // mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text("Completed", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                          Text(
+                            "Completed",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           Padding(
                             padding: EdgeInsets.only(top: 10),
                             child: Text(
-                              "9",
-                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColor.primaryGreen),
+                              completedCount,
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppColor.primaryGreen,
+                              ),
                             ),
                           ),
                         ],
@@ -130,337 +216,104 @@ class ServiceView extends StatelessWidget {
                   ),
                 ],
               ),
-              // ----------------- IN PROGRESS PART ----------------- //
-              Padding(
-                padding: EdgeInsets.only(top: 20),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColor.softWhite,
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [BoxShadow(color: AppColor.darkCharcoal.withAlpha(63), blurRadius: 10, offset: const Offset(0, 0))],
-                  ),
-                  width: 360,
-                  height: 160,
+              inProgressServices.isNotEmpty
+                ? Padding(
+                  padding: EdgeInsets.only(top: 20),
                   child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Padding(
-                                padding: EdgeInsets.only(left: 10, top: 10),
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Container(
-                                    width: 50,
-                                    height: 50,
-                                    decoration: BoxDecoration(color: AppColor.primaryGreen, borderRadius: BorderRadius.circular(8)),
-                                    child: Icon(Icons.add, color: AppColor.softWhite, size: 36),
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                padding: EdgeInsets.only(left: 10),
-                                width: 100,
-                                child: Text("Brake Oil Service", style: TextStyle(fontWeight: FontWeight.bold)),
-                              ),
-                            ],
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Padding(
-                                padding: EdgeInsets.only(top: 10, right: 10),
-                                child: Text("IN INSPECTION", style: TextStyle(fontWeight: FontWeight.bold)),
-                              ),
-                              Padding(
-                                padding: EdgeInsets.only(top: 5, right: 10),
-                                child: Container(
-                                  //color: AppColor.darkCharcoal,
-                                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: AppColor.darkCharcoal,
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: Colors.black),
-                                  ),
-                                  child: Text(
-                                    "BFP 1975",
-                                    style: TextStyle(color: AppColor.softWhite, fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-
-                      Divider(
-                        indent: 10, // adjust later
-                        endIndent: 10,
-                        color: AppColor.slateGray.withAlpha(63),
-                        thickness: 1,
-                      ),
-
-                      Column(
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.only(left: 10),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text("ETA : 3:00 PM", style: TextStyle(fontWeight: FontWeight.bold)),
-                            ),
-                          ),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColor.softWhite,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                side: const BorderSide(color: AppColor.darkCharcoal, width: 1),
-                              ),
-                              minimumSize: const Size(340, 40),
-                            ),
-                            onPressed: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => const ServiceDetailsView()));
-                            },
-                            child: const Text("View Details", style: TextStyle(color: AppColor.darkCharcoal)),
-                          ),
-                        ],
-                      ),
-                    ],
+                    children: inProgressServices
+                        .map((s) => ServiceItem(service: s, inProgress: true))
+                        .toList(),
                   ),
+                )
+              : Padding(padding: EdgeInsets.only(top: 20)),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColor.softWhite,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColor.darkCharcoal.withAlpha(63),
+                      blurRadius: 10,
+                      offset: const Offset(0, 0),
+                    ),
+                  ],
                 ),
-              ),
-              // ----------------- IN PROGRESS END ----------------- //
-              Padding(
-                padding: EdgeInsets.only(top: 20),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColor.softWhite,
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: [BoxShadow(color: AppColor.darkCharcoal.withAlpha(63), blurRadius: 10, offset: const Offset(0, 0))],
-                  ),
-                  height: 40,
-                  width: 360,
+                height: 40,
+                width: 360,
 
-                  child: TabBar(
-                    dividerColor: Colors.transparent,
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    indicator: BoxDecoration(color: AppColor.primaryGreen, borderRadius: BorderRadius.circular(30)),
-                    labelColor: AppColor.softWhite,
-                    unselectedLabelColor: AppColor.darkCharcoal,
-                    tabs: [
-                      Tab(text: "Upcoming"),
-                      Tab(text: "Completed"),
-                    ],
+                child: TabBar(
+                  dividerColor: Colors.transparent,
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  indicator: BoxDecoration(
+                    color: AppColor.primaryGreen,
+                    borderRadius: BorderRadius.circular(30),
                   ),
+                  labelColor: AppColor.softWhite,
+                  unselectedLabelColor: AppColor.darkCharcoal,
+                  tabs: [
+                    Tab(text: "Upcoming"),
+                    Tab(text: "Completed"),
+                  ],
                 ),
               ),
               Expanded(
                 child: TabBarView(
                   children: [
-                    Center(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: 20),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: AppColor.softWhite,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [BoxShadow(color: AppColor.darkCharcoal.withAlpha(63), blurRadius: 10, offset: const Offset(0, 0))],
-                          ),
-                          width: 360,
-                          height: 160,
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Padding(
-                                        padding: EdgeInsets.only(left: 10, top: 10),
-                                        child: Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: Container(
-                                            width: 50,
-                                            height: 50,
-                                            decoration: BoxDecoration(color: AppColor.primaryGreen, borderRadius: BorderRadius.circular(8)),
-                                            child: Icon(Icons.add, color: AppColor.softWhite, size: 36),
-                                          ),
+                    activeServices.isNotEmpty
+                        ? Padding(
+                            padding: EdgeInsets.only(top: 10),
+                            child: SingleChildScrollView(
+                              child: Padding(
+                                padding: EdgeInsets.only(top: 10),
+                                child: Column(
+                                  children: activeServices
+                                      .map(
+                                        (s) => ServiceItem(
+                                          service: s,
+                                          inProgress: false,
                                         ),
-                                      ),
-                                      Container(
-                                        padding: EdgeInsets.only(left: 10),
-                                        width: 100,
-                                        child: Text("Brake Oil Service", style: TextStyle(fontWeight: FontWeight.bold)),
-                                      ),
-                                    ],
-                                  ),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Padding(
-                                        padding: EdgeInsets.only(top: 10, right: 10),
-                                        child: Text("IN INSPECTION", style: TextStyle(fontWeight: FontWeight.bold)),
-                                      ),
-                                      Padding(
-                                        padding: EdgeInsets.only(top: 5, right: 10),
-                                        child: Container(
-                                          //color: AppColor.darkCharcoal,
-                                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                                          decoration: BoxDecoration(
-                                            color: AppColor.darkCharcoal,
-                                            borderRadius: BorderRadius.circular(4),
-                                            border: Border.all(color: Colors.black),
-                                          ),
-                                          child: Text(
-                                            "BFP 1975",
-                                            style: TextStyle(color: AppColor.softWhite, fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                      )
+                                      .toList(),
+                                ),
                               ),
-
-                              Divider(
-                                indent: 10, // adjust later
-                                endIndent: 10,
-                                color: AppColor.slateGray.withAlpha(63),
-                                thickness: 1,
-                              ),
-
-                              Column(
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsets.only(left: 10),
-                                    child: Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: Text("ETA : 3:00 PM", style: TextStyle(fontWeight: FontWeight.bold)),
-                                    ),
-                                  ),
-                                  AppButtonWidget(text: "Pay", onPressed: () {
-                                    navigationProvider.showFullPageContent(BasePage(child: PaymentView()));
-
-                                  })
-
-
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Center(
-                      child: Center(
-                        child: Padding(
-                          padding: EdgeInsets.only(top: 20),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: AppColor.softWhite,
-                              borderRadius: BorderRadius.circular(15),
-                              boxShadow: [BoxShadow(color: AppColor.darkCharcoal.withAlpha(63), blurRadius: 10, offset: const Offset(0, 0))],
                             ),
-                            width: 360,
-                            height: 160,
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Padding(
-                                          padding: EdgeInsets.only(left: 10, top: 10),
-                                          child: Align(
-                                            alignment: Alignment.centerLeft,
-                                            child: Container(
-                                              width: 50,
-                                              height: 50,
-                                              decoration: BoxDecoration(color: AppColor.primaryGreen, borderRadius: BorderRadius.circular(8)),
-                                              child: Icon(Icons.add, color: AppColor.softWhite, size: 36),
-                                            ),
-                                          ),
+                          )
+                        : Center(child: Text("No Upcoming Services")),
+                    completedServices.isNotEmpty
+                        ? Padding(
+                            padding: EdgeInsets.only(top: 10),
+                            child: SingleChildScrollView(
+                              child: Padding(
+                                padding: EdgeInsets.only(top: 10),
+                                child: Column(
+                                  children: completedServices
+                                      .map(
+                                        (s) => ServiceItem(
+                                          service: s,
+                                          inProgress: false,
                                         ),
-                                        Container(
-                                          padding: EdgeInsets.only(left: 10),
-                                          width: 100,
-                                          child: Text("Brake Oil Service", style: TextStyle(fontWeight: FontWeight.bold)),
-                                        ),
-                                      ],
-                                    ),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                      children: [
-                                        Padding(
-                                          padding: EdgeInsets.only(top: 10, right: 10),
-                                          child: Text("IN INSPECTION", style: TextStyle(fontWeight: FontWeight.bold)),
-                                        ),
-                                        Padding(
-                                          padding: EdgeInsets.only(top: 5, right: 10),
-                                          child: Container(
-                                            //color: AppColor.darkCharcoal,
-                                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                                            decoration: BoxDecoration(
-                                              color: AppColor.darkCharcoal,
-                                              borderRadius: BorderRadius.circular(4),
-                                              border: Border.all(color: Colors.black),
-                                            ),
-                                            child: Text(
-                                              "BFP 1975",
-                                              style: TextStyle(color: AppColor.softWhite, fontWeight: FontWeight.bold),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                      )
+                                      .toList(),
                                 ),
-
-                                Divider(
-                                  indent: 10, // adjust later
-                                  endIndent: 10,
-                                  color: AppColor.slateGray.withAlpha(63),
-                                  thickness: 1,
-                                ),
-
-                                Column(
-                                  children: [
-                                    Padding(
-                                      padding: EdgeInsets.only(left: 10),
-                                      child: Align(
-                                        alignment: Alignment.centerLeft,
-                                        child: Text("ETA : 3:00 PM", style: TextStyle(fontWeight: FontWeight.bold)),
-                                      ),
-                                    ),
-                                    AppButtonWidget(text: "Review", onPressed: () {
-                                      navigationProvider.showFullPageContent(BasePage(child: FeedbackView()));
-
-                                    })
-
-                                  ],
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
-                    ),
+                          )
+                        : Center(child: Text("No Completed Services")),
                   ],
                 ),
               ),
             ],
           ),
         ),
-
         floatingActionButton: Padding(
           padding: const EdgeInsets.only(bottom: 20),
           child: FloatingActionButton(
             backgroundColor: AppColor.primaryGreen,
-            onPressed: () {
-              navigationProvider.showFullPageContent(BasePage(child: BookServiceView()));
+            onPressed: () async {
+              // navigationProvider.showFullPageContent(
+              //   BasePage(child: BookServiceView()),
+              // );
+              await ss.getInProgressServices(userId);
             },
             child: const Icon(Icons.add, size: 32, color: AppColor.softWhite),
           ),
