@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
+import 'package:mobile_app_assignment/model/payment.dart';
+import 'package:mobile_app_assignment/view/feedback_view.dart';
+import 'package:mobile_app_assignment/view/payment_view.dart';
 import 'firebase_options.dart';
-import 'core/theme/app_colors.dart';
-import 'view/login_view.dart';
-import 'view/home_view.dart';            // only if you need direct access
-import 'view/service_view.dart';
-import 'view/profile_view.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'widgets/navbar_widget.dart';
-import 'model/global_user.dart';
-import 'provider/navigation_provider.dart';
+import './core/theme/app_colors.dart';
+import './view/service_view.dart';
+import './view/home_view.dart';
+import './view/profile_view.dart';
+import '../provider/navigation_provider.dart';
 import 'package:provider/provider.dart';
 
 Future<void> main() async {

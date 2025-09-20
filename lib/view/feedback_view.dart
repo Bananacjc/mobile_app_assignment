@@ -106,8 +106,8 @@ class FeedbackForm extends StatefulWidget {
 }
 
 class _FeedbackFormState extends State<FeedbackForm> {
-  int _numOfStar = 0;
-  final int _maxNumOfStar = 5;
+  int _rating = 0;
+  final int _maxRating = 5;
 
   final TextEditingController _commentController = TextEditingController();
 
@@ -116,10 +116,16 @@ class _FeedbackFormState extends State<FeedbackForm> {
     super.initState();
   }
 
-  void _setNumOfStar(int value) {
+  void _setRating(int newRating) {
     setState(() {
-      _numOfStar = value;
+      _rating = newRating;
     });
+  }
+
+  void _increaseRating() {
+    if (_rating < _maxRating) {
+      _setRating(_rating + 1);
+    }
   }
 
   @override
@@ -152,12 +158,12 @@ class _FeedbackFormState extends State<FeedbackForm> {
             Padding(padding: EdgeInsets.only(top: 20)),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (int i = 0; i < _maxNumOfStar; i++) ...[
-                  Icon(Icons.star, color: AppColor.accentMint, size: 42),
-                  Padding(padding: EdgeInsets.symmetric(horizontal: 4)),
-                ],
-              ],
+              children: List.generate(_maxRating, (index) {
+                return GestureDetector(
+                  onTap: () => _setRating(index + 1),
+                  child: Icon(index < _rating ? Icons.star : Icons.star_border, color: AppColor.accentMint, size: 44),
+                );
+              }),
             ),
             Padding(padding: EdgeInsets.only(top: 20)),
 
@@ -176,11 +182,7 @@ class _FeedbackFormState extends State<FeedbackForm> {
                   maxLines: 8,
                   minLines: 5,
                   maxLength: 500,
-                  buildCounter: (BuildContext context, {
-                    required int currentLength,
-                    required int? maxLength,
-                    required bool isFocused,
-                  }) {
+                  buildCounter: (BuildContext context, {required int currentLength, required int? maxLength, required bool isFocused}) {
                     final bool isAtLimit = currentLength >= maxLength!;
                     final int remainingLength = maxLength - currentLength;
                     return Text(
@@ -244,9 +246,12 @@ class _FeedbackViewState extends State<FeedbackView> {
               Padding(padding: EdgeInsets.only(top: 20)),
               FeedbackForm(),
               Padding(padding: EdgeInsets.only(top: 20)),
-              AppButtonWidget(text: "Submit", onPressed: () {
-                UiHelper.showSnackBar(context, "Thank you for your feedback!", isError: false);
-              }),
+              AppButtonWidget(
+                text: "Submit",
+                onPressed: () {
+                  UiHelper.showSnackBar(context, "Thank you for your feedback!", isError: false);
+                },
+              ),
             ],
           ),
         ),
