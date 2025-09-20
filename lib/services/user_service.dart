@@ -91,17 +91,36 @@ class UserService {
     }
   }
 
-  Future<bool> userLogin(String email, String password) async {
+  Future<Map<String, dynamic>> userLogin(String email, String password) async {
+    final userDetails = <String, dynamic>{
+      "success": false,
+    };
     try{
       final querySnapshot = await _usersCollection.where('email', isEqualTo: email).limit(1).get();
       if(querySnapshot.docs.isNotEmpty) {
         final user = querySnapshot.docs.first.data();
-        return BCrypt.checkpw(password, user.password);
+        final verification = BCrypt.checkpw(password, user.password);
+        if(verification){
+          userDetails['success'] = verification;
+          userDetails['userId'] = querySnapshot.docs.first.id;
+        }
+
       }
-      return false;
     }catch(e) {
       print("Error occurred in login: $e");
-      rethrow;
     }
+    return userDetails;
+  }
+
+  Future<User?> getUser(String userId) async {
+    try{
+      final querySnapshot = await _usersCollection.doc(userId).get();
+      if(querySnapshot.exists){
+        return querySnapshot.data();
+      }
+    }catch(e) {
+      print("Error occurred in login: $e");
+    }
+    return null;
   }
 }
