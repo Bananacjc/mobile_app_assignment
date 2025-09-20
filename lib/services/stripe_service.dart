@@ -10,7 +10,7 @@ class StripeService {
   Future<void> makePayment(int amount) async {
     try {
       String? paymentIntentClientSecret = await _createPaymentIntent(amount, "myr");
-      if (paymentIntentClientSecret == null) return;
+      if (paymentIntentClientSecret! == null) return;
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(paymentIntentClientSecret: paymentIntentClientSecret, merchantDisplayName: "Car Service"),
       );
