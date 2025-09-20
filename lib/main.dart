@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:mobile_app_assignment/model/payment.dart';
 import 'package:mobile_app_assignment/view/feedback_view.dart';
 import 'package:mobile_app_assignment/view/payment_view.dart';
@@ -17,26 +15,68 @@ import 'package:provider/provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
-  await _stripeSetup();
-
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
-}
-
-Future<void> _stripeSetup() async {
-  Stripe.publishableKey = dotenv.get("STRIPE_PUBLISHABLE_KEY");
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => NavigationProvider(),
-      child: MaterialApp(home: MainLayout()),
+      create: (_) => NavigationProvider(),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primaryColor: AppColor.primaryGreen,
+          colorScheme: ColorScheme.fromSwatch().copyWith(
+            primary: AppColor.primaryGreen,
+            secondary: AppColor.accentMint,
+          ),
+          inputDecorationTheme: InputDecorationTheme(
+            focusedBorder: OutlineInputBorder(
+              borderSide: const BorderSide(color: AppColor.primaryGreen, width: 2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            labelStyle: const TextStyle(color: AppColor.primaryGreen),
+          ),
+          textSelectionTheme: const TextSelectionThemeData(
+            cursorColor: AppColor.primaryGreen,
+            selectionColor: AppColor.primaryGreen,
+            selectionHandleColor: AppColor.primaryGreen,
+          ),
+        ),
+        home: const _AuthGate(),   // <- decide LoginView vs MainLayout here
+      ),
+    );
+  }
+}
+
+class _AuthGate extends StatelessWidget {
+  const _AuthGate();
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: AppColor.softWhite,
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final user = snap.data;
+        if (user == null) {
+          GlobalUser.logout();          // keep your global in sync
+          return const LoginView();      // NOT logged in -> Login
+        } else {
+          GlobalUser.user = user;        // logged in -> your app
+          return const MainLayout();
+        }
+      },
     );
   }
 }
@@ -47,9 +87,8 @@ class MainLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final navigationProvider = Provider.of<NavigationProvider>(context);
-    final Size size = MediaQuery.of(context).size;
-
-    final List<Widget> _pages = [ServiceView(), HomeView(), ProfileView()];
+    final size = MediaQuery.of(context).size;
+    final pages = [const ServiceView(), const HomeView(), const ProfileView()];
 
     return Scaffold(
       backgroundColor: AppColor.softWhite,
@@ -60,12 +99,14 @@ class MainLayout extends StatelessWidget {
         onTap: (index) => navigationProvider.changeTab(index),
       ),
       body: GestureDetector(
-        onTap: () {
-          FocusScope.of(context).unfocus();
-        },
+        onTap: () => FocusScope.of(context).unfocus(),
         child: Stack(
           children: [
-            Positioned.fill(child: navigationProvider.showFullPage ? navigationProvider.fullPage! : _pages[navigationProvider.currentIndex]),
+            Positioned.fill(
+              child: navigationProvider.showFullPage
+                  ? navigationProvider.fullPage!
+                  : pages[navigationProvider.currentIndex],
+            ),
           ],
         ),
       ),
