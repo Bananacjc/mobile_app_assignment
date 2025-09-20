@@ -94,7 +94,7 @@ class PaymentService {
 
   Future<bool> makePayment(String serviceId, double amount) async {
     try{
-      final paymentIntent = await createPaymentIntent(amount);
+      Map<String, dynamic>? paymentIntent = await createPaymentIntent(amount);
       Stripe.publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY']!;
 
       await Stripe.instance.initPaymentSheet(
@@ -102,8 +102,10 @@ class PaymentService {
           paymentIntentClientSecret: paymentIntent['client_secret'],
           merchantDisplayName: 'Service Payment',
         ),
-      );
-      await Stripe.instance.presentPaymentSheet();
+      ).then((value) {});
+      await Stripe.instance.presentPaymentSheet().then((value) {
+        paymentIntent = null;
+      });
       print("Payment successful");
       // await ss2.updateServiceStatus(serviceId, 'paid');
       return true;

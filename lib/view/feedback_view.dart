@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile_app_assignment/services/feedback_service.dart';
 import 'package:mobile_app_assignment/widgets/appbar_widget.dart';
 import 'package:provider/provider.dart';
 import '../core/theme/app_colors.dart';
@@ -7,6 +8,7 @@ import '../core/theme/app_decoration.dart';
 import '../provider/navigation_provider.dart';
 import '../widgets/app_button_widget.dart';
 import 'custom_widgets/ui_helper.dart';
+import '../model/feedback.dart' as fb;
 
 class ServiceItem extends StatelessWidget {
   const ServiceItem({super.key});
@@ -99,40 +101,23 @@ class ServiceItem extends StatelessWidget {
 }
 
 class FeedbackForm extends StatefulWidget {
-  const FeedbackForm({super.key});
+  final int rating;
+  final Function(int) onRatingChanged;
+  final TextEditingController commentController;
+
+  const FeedbackForm({
+    super.key,
+    required this.rating,
+    required this.onRatingChanged,
+    required this.commentController,
+  });
 
   @override
   State<FeedbackForm> createState() => _FeedbackFormState();
 }
 
 class _FeedbackFormState extends State<FeedbackForm> {
-  int _rating = 0;
   final int _maxRating = 5;
-
-  final TextEditingController _commentController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  void _setRating(int newRating) {
-    setState(() {
-      _rating = newRating;
-    });
-  }
-
-  void _increaseRating() {
-    if (_rating < _maxRating) {
-      _setRating(_rating + 1);
-    }
-  }
-
-  @override
-  void dispose() {
-    _commentController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -150,23 +135,26 @@ class _FeedbackFormState extends State<FeedbackForm> {
               "How was your service experience?",
               style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16, color: AppColor.darkCharcoal),
             ),
-            Padding(padding: EdgeInsets.only(top: 8)),
+            SizedBox(height: 8),
             Text(
               "Please rate our service",
               style: GoogleFonts.inter(fontWeight: FontWeight.w400, fontSize: 16, color: AppColor.slateGray),
             ),
-            Padding(padding: EdgeInsets.only(top: 20)),
+            SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(_maxRating, (index) {
                 return GestureDetector(
-                  onTap: () => _setRating(index + 1),
-                  child: Icon(index < _rating ? Icons.star : Icons.star_border, color: AppColor.accentMint, size: 44),
+                  onTap: () => widget.onRatingChanged(index + 1),
+                  child: Icon(
+                      index < widget.rating ? Icons.star : Icons.star_border,
+                      color: AppColor.accentMint,
+                      size: 44
+                  ),
                 );
               }),
             ),
-            Padding(padding: EdgeInsets.only(top: 20)),
-
+            SizedBox(height: 20),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -174,11 +162,11 @@ class _FeedbackFormState extends State<FeedbackForm> {
                   "Comments (Optional)",
                   style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16, color: AppColor.darkCharcoal),
                 ),
-                Padding(padding: EdgeInsets.only(top: 8)),
+                SizedBox(height: 8),
                 TextField(
                   keyboardType: TextInputType.text,
                   textAlign: TextAlign.left,
-                  controller: _commentController,
+                  controller: widget.commentController, // Use the passed controller
                   maxLines: 8,
                   minLines: 5,
                   maxLength: 500,
@@ -212,7 +200,6 @@ class _FeedbackFormState extends State<FeedbackForm> {
     );
   }
 }
-
 class FeedbackView extends StatefulWidget {
   const FeedbackView({super.key});
 
@@ -222,16 +209,24 @@ class FeedbackView extends StatefulWidget {
 
 class _FeedbackViewState extends State<FeedbackView> {
   final String _title = "Feedback";
+  int _rating = 0;
+  final TextEditingController _commentController = TextEditingController();
+
+  void _setRating(int newRating) {
+    setState(() {
+      _rating = newRating;
+    });
+  }
 
   @override
-  void initState() {
-    super.initState();
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final navigationProvider = Provider.of<NavigationProvider>(context);
-    final Size size = MediaQuery.of(context).size;
 
     return Scaffold(
       backgroundColor: AppColor.softWhite,
@@ -244,11 +239,23 @@ class _FeedbackViewState extends State<FeedbackView> {
               Padding(padding: EdgeInsets.only(top: 4)),
               ServiceItem(),
               Padding(padding: EdgeInsets.only(top: 20)),
-              FeedbackForm(),
+              FeedbackForm(
+                rating: _rating,
+                onRatingChanged: _setRating,
+                commentController: _commentController,
+              ),
               Padding(padding: EdgeInsets.only(top: 20)),
               AppButtonWidget(
                 text: "Submit",
-                onPressed: () {
+                onPressed: () async{
+                  final FeedbackService feedbackService = FeedbackService();
+                  final fb.Feedback feedback = fb.Feedback(
+                      serviceId: "serviceId",
+                      star: _rating,
+                      comment: _commentController.text
+                  );
+                  await feedbackService.addFeedback(feedback);
+                  navigationProvider.goBack();
                   UiHelper.showSnackBar(context, "Thank you for your feedback!", isError: false);
                 },
               ),
