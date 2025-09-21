@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:mobile_app_assignment/view/custom_widgets/ui_helper.dart';
-import 'package:google_fonts/google_fonts.dart'; // 👈 add this
+import 'package:google_fonts/google_fonts.dart';
 
 import 'firebase_options.dart';
 import 'core/theme/app_colors.dart';

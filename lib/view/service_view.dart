@@ -53,7 +53,6 @@ class _ServiceViewState extends State<ServiceView> {
 
   @override
   Widget build(BuildContext context) {
-    // Size size = MediaQuery.of(context).size;
     final navigationProvider = Provider.of<NavigationProvider>(
       context,
       listen: false,
