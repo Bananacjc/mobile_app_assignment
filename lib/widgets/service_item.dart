@@ -89,7 +89,7 @@ class _ServiceItemState extends State<ServiceItem> {
       // Middle-left = ETA (end time) when available
       if (endAppointment != null) {
         middleLeftDisplay =
-        "ETA ${DateFormat.jm().format(endAppointment.toLocal())}";
+            "ETA ${DateFormat.jm().format(endAppointment.toLocal())}";
       } else {
         middleLeftDisplay = "";
       }
@@ -301,19 +301,35 @@ class _ServiceItemState extends State<ServiceItem> {
   @override
   Widget build(BuildContext context) {
     final Map<String, VoidCallback> actions = {
-      "pay": () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PaymentView(service: widget.service),
-        ),
-      ),
+      "pay": () async {
+        final result = Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentView(service: widget.service),
+          ),
+        );
+
+        if (result == true) {
+          setState(() {
+            buttonDisplay = 1;
+          });
+        }
+      },
       "reschedule": _reschedule,
-      "feedback": () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => FeedbackView(service: widget.service),
-        ),
-      ),
+      "feedback": () async {
+        final result = Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FeedbackView(service: widget.service),
+          ),
+        );
+
+        if (result == true) {
+          setState(() {
+            buttonDisplay = 1;
+          });
+        }
+      },
     };
 
     return Padding(
