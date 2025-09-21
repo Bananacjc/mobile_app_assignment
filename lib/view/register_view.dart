@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:mobile_app_assignment/view/login_view.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:bcrypt/bcrypt.dart'; // ✅ bcrypt for hashing
-import '../services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
 import '../core/theme/app_colors.dart';
-import '../widgets/navbar_widget.dart';
+import 'custom_widgets/ui_helper.dart';
+import 'login_view.dart';
+import '../services/register_service.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -23,9 +19,11 @@ class _RegisterViewState extends State<RegisterView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  bool _rememberMe = true;
+
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+
+  final RegisterService _registerService = RegisterService();
 
   @override
   void dispose() {
@@ -39,38 +37,22 @@ class _RegisterViewState extends State<RegisterView> {
 
   Future<void> _register() async {
     if (_passwordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Passwords do not match")),
-      );
+      UiHelper.showSnackBar(context, 'Passwords do not match', isError: true);
       return;
     }
 
     try {
-      final authService = AuthService();
-
-      // ✅ Create user in Firebase Auth
-      final user = await authService.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+      final user = await _registerService.registerUser(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
 
       if (user != null) {
-        // ✅ Update FirebaseAuth profile with full name
-        final fullName =
-            "${_firstNameController.text.trim()} ${_lastNameController.text.trim()}";
-        await user.updateDisplayName(fullName);
-        await user.reload(); // reload so it reflects immediately
+        UiHelper.showSnackBar(context, 'Passwords do not match', isError: true);
 
-        // refresh user reference
-        final updatedUser = FirebaseAuth.instance.currentUser;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("✅ Account created: ${updatedUser?.displayName}")),
-        );
-
-        // Navigate to login page
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const LoginView()),
@@ -79,16 +61,13 @@ class _RegisterViewState extends State<RegisterView> {
     } on FirebaseAuthException catch (e) {
       String message = "Registration failed";
       if (e.code == 'weak-password') message = "Password is too weak";
-      if (e.code == 'email-already-in-use') message = "Email is already registered";
-      if (e.code == 'invalid-email') message = "Invalid email address";
+      if (e.code == 'email-already-in-use') message = "Email already registered";
+      if (e.code == 'invalid-email') message = "Invalid email";
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      UiHelper.showSnackBar(context, message, isError: true);
+
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Something went wrong: $e")),
-      );
+      UiHelper.showSnackBar(context, "Something went wrong: $e", isError: true);
     }
   }
 
@@ -105,30 +84,20 @@ class _RegisterViewState extends State<RegisterView> {
             Container(
               width: double.infinity,
               height: size.height * 0.325,
-              decoration: const BoxDecoration(
-                color: AppColor.primaryGreen,
-              ),
+              decoration: const BoxDecoration(color: AppColor.primaryGreen),
               child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircleAvatar(
-                      radius: 110,
-                      backgroundColor: AppColor.primaryGreen,
-                      child: Padding(
-                        padding: const EdgeInsets.all(6.0),
-                        child: Image.asset(
-                          'assets/logo.png',
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-                  ],
+                child: CircleAvatar(
+                  radius: 110,
+                  backgroundColor: AppColor.primaryGreen,
+                  child: Padding(
+                    padding: const EdgeInsets.all(6.0),
+                    child: Image.asset('assets/logo.png', fit: BoxFit.contain),
+                  ),
                 ),
               ),
             ),
 
-            // ✅ Form content (unchanged UI)
+            // White form section
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
@@ -150,10 +119,8 @@ class _RegisterViewState extends State<RegisterView> {
                 child: Form(
                   key: _formKey,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 20),
-
                       const Center(
                         child: Text(
                           'Sign up an account',
@@ -164,265 +131,59 @@ class _RegisterViewState extends State<RegisterView> {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 40),
 
-                      // ✅ First Name + Last Name Row (UI same as yours)
+                      // First & Last Name
                       Row(
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'First Name',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColor.darkCharcoal,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                TextFormField(
-                                  controller: _firstNameController,
-                                  decoration: InputDecoration(
-                                    hintText: 'Enter first name',
-                                    hintStyle: const TextStyle(
-                                      color: AppColor.slateGray,
-                                      fontSize: 14,
-                                    ),
-                                    filled: true,
-                                    fillColor: AppColor.softWhite,
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 16,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          Expanded(child: _buildTextField("First Name", _firstNameController)),
                           const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Last Name',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColor.darkCharcoal,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                TextFormField(
-                                  controller: _lastNameController,
-                                  decoration: InputDecoration(
-                                    hintText: 'Enter last name',
-                                    hintStyle: const TextStyle(
-                                      color: AppColor.slateGray,
-                                      fontSize: 14,
-                                    ),
-                                    filled: true,
-                                    fillColor: AppColor.softWhite,
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 16,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          Expanded(child: _buildTextField("Last Name", _lastNameController)),
                         ],
                       ),
-
                       const SizedBox(height: 24),
 
-                      // ✅ Email (same as yours)
-                      const Text(
-                        'Email',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColor.darkCharcoal,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: InputDecoration(
-                          hintText: 'Enter your email',
-                          hintStyle: const TextStyle(
-                            color: AppColor.slateGray,
-                            fontSize: 14,
-                          ),
-                          filled: true,
-                          fillColor: AppColor.softWhite,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 16,
-                          ),
-                        ),
-                      ),
-
+                      _buildTextField("Email", _emailController),
                       const SizedBox(height: 24),
 
-                      // ✅ Password + Confirm Password (UI same as yours)
-                      const Text(
-                        'Password',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColor.darkCharcoal,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: _obscurePassword,
-                        decoration: InputDecoration(
-                          hintText: 'Enter your password',
-                          hintStyle: const TextStyle(
-                            color: AppColor.slateGray,
-                            fontSize: 14,
-                          ),
-                          filled: true,
-                          fillColor: AppColor.softWhite,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 16,
-                          ),
-                          suffixIcon: IconButton(
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                              color: AppColor.slateGray,
-                            ),
-                          ),
-                        ),
-                      ),
-
+                      _buildPasswordField("Password", _passwordController, _obscurePassword, () {
+                        setState(() => _obscurePassword = !_obscurePassword);
+                      }),
                       const SizedBox(height: 24),
 
-                      const Text(
-                        'Confirm Password',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColor.darkCharcoal,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _confirmPasswordController,
-                        obscureText: _obscureConfirmPassword,
-                        decoration: InputDecoration(
-                          hintText: 'Confirm your password',
-                          hintStyle: const TextStyle(
-                            color: AppColor.slateGray,
-                            fontSize: 14,
-                          ),
-                          filled: true,
-                          fillColor: AppColor.softWhite,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 16,
-                          ),
-                          suffixIcon: IconButton(
-                            onPressed: () {
-                              setState(() {
-                                _obscureConfirmPassword =
-                                !_obscureConfirmPassword;
-                              });
-                            },
-                            icon: Icon(
-                              _obscureConfirmPassword
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                              color: AppColor.slateGray,
-                            ),
-                          ),
-                        ),
-                      ),
+                      _buildPasswordField("Confirm Password", _confirmPasswordController, _obscureConfirmPassword, () {
+                        setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
+                      }),
 
                       const SizedBox(height: 32),
-
-                      // ✅ Register Button
                       SizedBox(
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: _register, // ✅ Now saves to Firestore+bcrypt
+                          onPressed: _register,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColor.primaryGreen,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
                           child: const Text(
                             'Register',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 20),
-
-                      Center(
-                        child: TextButton(
-                          onPressed: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const LoginView()),
-                            );
-                          },
-                          child: const Text(
-                            'Back to login',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppColor.primaryGreen,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => const LoginView()),
+                          );
+                        },
+                        child: const Text(
+                          'Back to login',
+                          style: TextStyle(color: AppColor.primaryGreen, fontWeight: FontWeight.w500),
                         ),
                       ),
-
-                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
@@ -431,6 +192,56 @@ class _RegisterViewState extends State<RegisterView> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField(String label, TextEditingController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColor.darkCharcoal)),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          decoration: InputDecoration(
+            hintText: 'Enter $label',
+            hintStyle: const TextStyle(color: AppColor.slateGray, fontSize: 14),
+            filled: true,
+            fillColor: AppColor.softWhite,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordField(
+      String label, TextEditingController controller, bool obscure, VoidCallback toggle) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColor.darkCharcoal)),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          obscureText: obscure,
+          decoration: InputDecoration(
+            hintText: 'Enter $label',
+            hintStyle: const TextStyle(color: AppColor.slateGray, fontSize: 14),
+            filled: true,
+            fillColor: AppColor.softWhite,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            suffixIcon: IconButton(
+              icon: Icon(obscure ? Icons.visibility_off : Icons.visibility, color: AppColor.slateGray),
+              onPressed: toggle,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
