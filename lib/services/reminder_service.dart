@@ -58,4 +58,17 @@ class ReminderService {
     }
     return false;
   }
+
+  Future<Reminder?> getReminder(String userId, String type) async {
+    try{
+      final reminder = await _remindersCollection
+          .where('userId', isEqualTo: userId)
+          .where('type', isEqualTo: type)
+          .limit(1).get();
+      return reminder.docs[0].data();
+    } catch (e) {
+      print("Error deleting reminder: $e");
+    }
+    return null;
+  }
 }

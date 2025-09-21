@@ -199,7 +199,7 @@ class _ServiceItemState extends State<ServiceItem> {
                     ),
                     Container(
                       padding: EdgeInsets.only(left: 10),
-                      width: 100,
+                      width: 130,
                       child: Text(serviceTitle, style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ],

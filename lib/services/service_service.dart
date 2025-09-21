@@ -70,11 +70,9 @@ class ServiceService {
             .map((doc) => doc.data())
             .toList();
 
-        // First filter: not completed
         final activeServices =
         allServices.where((s) => s.status != "completed").toList();
 
-        // Second filter: appointment already started
         final inProgressServices = activeServices.where((s) {
           return s.appointmentDate != null && s.appointmentDate!.isAfter(now);
         }).toList();
@@ -83,7 +81,7 @@ class ServiceService {
         return inProgressServices;
       }
     } catch (e) {
-      print("Error fetching all services: $e");
+      print("Error fetching active services: $e");
     }
     return [];
   }
@@ -99,7 +97,6 @@ class ServiceService {
             .map((doc) => doc.data())
             .toList();
 
-        // Filter locally for completed
         final completedServices =
         allServices.where((s) => s.status == "completed").toList();
 
@@ -107,7 +104,7 @@ class ServiceService {
         return completedServices;
       }
     } catch (e) {
-      print("Error fetching all services: $e");
+      print("Error fetching completed services: $e");
     }
     return [];
   }
@@ -125,11 +122,9 @@ class ServiceService {
             .map((doc) => doc.data())
             .toList();
 
-        // First filter: not completed
         final activeServices =
         allServices.where((s) => s.status != "completed").toList();
 
-        // Second filter: appointment already started
         final inProgressServices = activeServices.where((s) {
           return s.appointmentDate != null && s.appointmentDate!.isBefore(now);
         }).toList();
@@ -138,9 +133,39 @@ class ServiceService {
         return inProgressServices;
       }
     } catch (e) {
-      print("Error fetching all services: $e");
+      print("Error fetching in-progress services: $e");
     }
     return [];
+  }
+
+  Future<Service?> getSelectedCompletedServices(String userId, String title) async {
+    try {
+      final querySnapshot = await _servicesCollection
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        final allServices = querySnapshot.docs
+            .map((doc) => doc.data())
+            .toList();
+
+        final filtered = allServices
+            .where((s) => s.status == "completed" && s.title == title).toList();
+
+        if(filtered.isNotEmpty){
+          filtered.sort((a, b) {
+            final dateA = a.appointmentDate ?? DateTime.fromMillisecondsSinceEpoch(0);
+            final dateB = b.appointmentDate ?? DateTime.fromMillisecondsSinceEpoch(0);
+            return dateB.compareTo(dateA); // descending order (latest -> oldest)
+          });
+
+          return filtered.first;
+        }
+      }
+    } catch (e) {
+      print("Error fetching selected completed services: $e");
+    }
+    return null;
   }
 
   Future<void> rescheduleService(
