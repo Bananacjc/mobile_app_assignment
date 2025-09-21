@@ -1,13 +1,16 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mobile_app_assignment/view/vehicle_view.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../model/global_user.dart';
 import '../services/auth_service.dart';
 import '../view/login_view.dart';
 import '../core/theme/app_colors.dart';
-import '../view/vehicle_view.dart';
 import '../provider/navigation_provider.dart';
+import 'account_view.dart';
+import '../services/sqlite_service.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -19,6 +22,9 @@ class ProfileView extends StatefulWidget {
 class _ProfileViewState extends State<ProfileView> {
   String _name = "Loading...";
   String _email = "Loading...";
+  File? _profileImage;
+
+  final SQLiteService _sqliteService = SQLiteService();
 
   @override
   void initState() {
@@ -27,10 +33,29 @@ class _ProfileViewState extends State<ProfileView> {
   }
 
   Future<void> _loadUserData() async {
-    setState(() {
-      _name = "${GlobalUser.user?.displayName ?? 'Guest'}";
-      _email = "${GlobalUser.user?.email ?? 'No Email'}";
-    });
+    final user = GlobalUser.user;
+    final _auth = AuthService();
+    if (user != null) {
+      // Ensure row exists in SQLite
+      await _sqliteService.insertUserIfNotExists(user.uid, user.email ?? '');
+
+      setState(() {
+        _name = user.displayName ?? "Guest";
+        _email = user.email ?? "No Email";
+      });
+
+      // Load profile picture from SQLite
+      final dbUser = await _sqliteService.getUserById(user.uid);
+      if (dbUser != null && dbUser['profile_picture'] != null) {
+        setState(() {
+          _profileImage = File(dbUser['profile_picture']);
+        });
+      } else {
+        setState(() {
+          _profileImage = null;
+        });
+      }
+    }
   }
 
   @override
@@ -47,8 +72,9 @@ class _ProfileViewState extends State<ProfileView> {
           backgroundColor: AppColor.primaryGreen,
           toolbarHeight: 80,
           titleSpacing: 0,
+          leadingWidth: 56,
           title: const Padding(
-            padding: EdgeInsets.only(left: 10, top: 20),
+            padding: EdgeInsets.only(left: 30),
             child: Text(
               "User Profile",
               style: TextStyle(
@@ -82,7 +108,7 @@ class _ProfileViewState extends State<ProfileView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Header
+                  // Header with profile picture
                   Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Row(
@@ -93,12 +119,20 @@ class _ProfileViewState extends State<ProfileView> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(30),
                             color: Colors.grey[300],
+                            image: _profileImage != null
+                                ? DecorationImage(
+                                    image: FileImage(_profileImage!),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
                           ),
-                          child: const Icon(
-                            Icons.person,
-                            size: 30,
-                            color: Colors.grey,
-                          ),
+                          child: _profileImage == null
+                              ? const Icon(
+                                  Icons.person,
+                                  size: 30,
+                                  color: Colors.grey,
+                                )
+                              : null,
                         ),
                         const SizedBox(width: 15),
                         Expanded(
@@ -130,7 +164,13 @@ class _ProfileViewState extends State<ProfileView> {
 
                   const SizedBox(height: 20),
 
-                  _buildMenuItem('My Account', Icons.chevron_right),
+                  _buildMenuItem(
+                    'My Account',
+                    Icons.chevron_right,
+                    onTap: () {
+                      navigationProvider.showFullPageContent(AccountView());
+                    },
+                  ),
                   _buildDivider(),
 
                   // VEHICLE —> open full-page VehicleView
@@ -180,22 +220,16 @@ class _ProfileViewState extends State<ProfileView> {
                           if (confirm != true) return;
 
                           try {
+                            // Sign out from Firebase
                             await AuthService().signOut();
 
-                            // Clear saved credentials
-                            final prefs = await SharedPreferences.getInstance();
-                            await prefs.remove('saved_email');
-                            await prefs.remove('saved_password');
-
                             if (!context.mounted) return;
-                            Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(
-                                builder: (_) => const LoginView(),
-                              ),
-                                  (route) => false,
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (_) => LoginView()),
                             );
                           } catch (e) {
-                            if (!context.mounted) return;
+                            if (!mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Logout failed: $e')),
                             );
@@ -219,7 +253,6 @@ class _ProfileViewState extends State<ProfileView> {
                       ),
                     ),
                   ),
-
                 ],
               ),
             ),
@@ -252,7 +285,6 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  // let this take an optional onTap
   Widget _buildMenuItem(
     String title,
     IconData trailingIcon, {

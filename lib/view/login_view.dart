@@ -34,14 +34,15 @@ class _LoginViewState extends State<LoginView> {
     final prefs = await SharedPreferences.getInstance();
     final savedEmail = prefs.getString('saved_email');
     final savedPassword = prefs.getString('saved_password');
+    final rememberMe = prefs.getBool("rememberMe");
 
-    if (savedEmail == null || savedPassword == null) {
+    if (rememberMe! || savedEmail != null || savedPassword != null) {
       // ❌ No remember me → force logout
       await FirebaseAuth.instance.signOut();
     } else {
       // ✅ Remember me checked → pre-fill fields
-      _emailController.text = savedEmail;
-      _passwordController.text = savedPassword;
+      _emailController.text = savedEmail!;
+      _passwordController.text = savedPassword!;
       _rememberMe = true;
       await _loginWithEmail();
     }
@@ -112,9 +113,11 @@ class _LoginViewState extends State<LoginView> {
         if (_rememberMe) {
           await prefs.setString('saved_email', email);
           await prefs.setString('saved_password', password);
+          await prefs.setBool("rememberMe", true);
         } else {
           await prefs.remove('saved_email');
           await prefs.remove('saved_password');
+          await prefs.setBool("rememberMe", false);
         }
 
         Navigator.of(context).pushAndRemoveUntil(

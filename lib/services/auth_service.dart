@@ -92,12 +92,14 @@ class AuthService {
     await _auth.signOut();
     await GoogleSignIn().signOut();
 
-        // Clear global user
+    // Clear global user
     GlobalUser.logout();
 
     // Clear saved credentials
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('saved_email');
     await prefs.remove('saved_password');
+    await prefs.setBool("rememberMe", false);
+
   }
 }
