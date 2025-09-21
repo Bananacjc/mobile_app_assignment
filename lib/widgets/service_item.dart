@@ -89,7 +89,7 @@ class _ServiceItemState extends State<ServiceItem> {
       // Middle-left = ETA (end time) when available
       if (endAppointment != null) {
         middleLeftDisplay =
-            "ETA ${DateFormat.jm().format(endAppointment.toLocal())}";
+        "ETA ${DateFormat.jm().format(endAppointment.toLocal())}";
       } else {
         middleLeftDisplay = "";
       }

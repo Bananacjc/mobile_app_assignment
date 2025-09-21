@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:mobile_app_assignment/view/custom_widgets/ui_helper.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firebase_options.dart';
 import 'core/theme/app_colors.dart';
@@ -22,6 +23,7 @@ Future<void> main() async {
   await dotenv.load(fileName: ".env");
   await _stripeSetup();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  FirebaseAuth.instance.setLanguageCode('en');
   runApp(const MyApp());
 }
 
@@ -84,6 +86,29 @@ class MyApp extends StatelessWidget {
 class _AuthGate extends StatelessWidget {
   const _AuthGate();
 
+  Future<bool> _tryAutoLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.containsKey('saved_email') && prefs.containsKey('saved_password')) {
+      String email = prefs.getString('saved_email')!;
+      String password = prefs.getString('saved_password')!;
+
+      try {
+        final userCredential = await FirebaseAuth.instance
+            .signInWithEmailAndPassword(email: email, password: password);
+
+        GlobalUser.user = userCredential.user;
+        return true;
+      } catch (e) {
+        // Failed auto-login; clear saved creds
+        prefs.remove('saved_email');
+        prefs.remove('saved_password');
+        return false;
+      }
+    }
+    return false;
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
@@ -98,10 +123,10 @@ class _AuthGate extends StatelessWidget {
 
         final user = snap.data;
         if (user == null) {
-          GlobalUser.logout();
-          return const LoginView();
+          GlobalUser.logout(); // keep your global in sync
+          return const LoginView(); // NOT logged in -> Login
         } else {
-          GlobalUser.user = user;
+          GlobalUser.user = user; // logged in -> your app
           return const MainLayout();
         }
       },
@@ -141,3 +166,5 @@ class MainLayout extends StatelessWidget {
     );
   }
 }
+
+
