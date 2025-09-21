@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../core/theme/app_colors.dart';
 import '../widgets/navbar_widget.dart';
 import 'package:mobile_app_assignment/view/register_view.dart';
-import '../model/user.dart';
+import '../model/user.dart'; //
 import '../main.dart';
 import '../services/user_service.dart';
 import '../services/auth_service.dart'; // ✅ Import AuthService

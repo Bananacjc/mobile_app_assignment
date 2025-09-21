@@ -4,11 +4,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:mobile_app_assignment/view/custom_widgets/ui_helper.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'firebase_options.dart';
 import 'core/theme/app_colors.dart';
 import 'view/login_view.dart';
-import 'view/home_view.dart'; // only if you need direct access
+import 'view/home_view.dart';
 import 'view/service_view.dart';
 import 'view/profile_view.dart';
 import 'widgets/navbar_widget.dart';
@@ -38,6 +39,10 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
+          fontFamily: GoogleFonts.inter().fontFamily,
+          textTheme: GoogleFonts.interTextTheme(),
+          primaryTextTheme: GoogleFonts.interTextTheme(),
+
           primaryColor: AppColor.primaryGreen,
           colorScheme: ColorScheme.fromSwatch().copyWith(
             primary: AppColor.primaryGreen,
@@ -45,10 +50,7 @@ class MyApp extends StatelessWidget {
           ),
           inputDecorationTheme: InputDecorationTheme(
             focusedBorder: OutlineInputBorder(
-              borderSide: const BorderSide(
-                color: AppColor.primaryGreen,
-                width: 2,
-              ),
+              borderSide: const BorderSide(color: AppColor.primaryGreen, width: 2),
               borderRadius: BorderRadius.circular(8),
             ),
             labelStyle: const TextStyle(color: AppColor.primaryGreen),
@@ -58,8 +60,22 @@ class MyApp extends StatelessWidget {
             selectionColor: AppColor.primaryGreen,
             selectionHandleColor: AppColor.primaryGreen,
           ),
+          appBarTheme: AppBarTheme(
+            titleTextStyle: GoogleFonts.inter(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppColor.softWhite,
+            ),
+          ),
+          snackBarTheme: SnackBarThemeData(
+            contentTextStyle: GoogleFonts.inter(
+              color: AppColor.softWhite,
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
         ),
-        home: const _AuthGate(), // <- decide LoginView vs MainLayout here
+        home: const _AuthGate(),
       ),
     );
   }
@@ -82,10 +98,10 @@ class _AuthGate extends StatelessWidget {
 
         final user = snap.data;
         if (user == null) {
-          GlobalUser.logout(); // keep your global in sync
-          return const LoginView(); // NOT logged in -> Login
+          GlobalUser.logout();
+          return const LoginView();
         } else {
-          GlobalUser.user = user; // logged in -> your app
+          GlobalUser.user = user;
           return const MainLayout();
         }
       },
