@@ -318,16 +318,19 @@ class _FeedbackViewState extends State<FeedbackView> {
                     comment: _commentController.text,
                   );
 
-                  await feedbackService.addFeedback(feedback);
-                  if (currentContext.mounted) {
-                    UiHelper.showSnackBar(
-                      currentContext,
-                      "Thank you for your feedback!",
-                      isError: false,
-                    );
+                  final f = await feedbackService.addFeedback(feedback);
+                  if(f != null){ // created
+                    if (currentContext.mounted) {
+                      UiHelper.showSnackBar(
+                        currentContext,
+                        "Thank you for your feedback!",
+                        isError: false,
+                      );
 
-                    Navigator.pop(currentContext, true);
+                      Navigator.pop(currentContext, true);
+                    }
                   }
+
                 },
               ),
             ],

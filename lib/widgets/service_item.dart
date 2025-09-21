@@ -315,19 +315,33 @@ class _ServiceItemState extends State<ServiceItem> {
   @override
   Widget build(BuildContext context) {
     final Map<String, VoidCallback> actions = {
-      "pay": () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PaymentView(service: widget.service),
-        ),
-      ),
+      "pay": () async {
+        final result = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentView(service: widget.service),
+          ),
+        );
+        if (result == true) {
+          setState(() {
+            buttonDisplay = 1;
+          });
+        }
+      },
       "reschedule": _reschedule,
-      "feedback": () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => FeedbackView(service: widget.service),
-        ),
-      ),
+      "feedback": () async {
+        final result = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FeedbackView(service: widget.service),
+          ),
+        );
+        if (result == true) {
+          setState(() {
+            buttonDisplay = 1;
+          });
+        }
+      },
     };
 
     return Padding(

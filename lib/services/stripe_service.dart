@@ -7,35 +7,38 @@ class StripeService {
 
   static final StripeService instance = StripeService._();
 
-  Future<void> makePayment(int amount) async {
+  Future<bool> makePayment(int amount) async {
     try {
       String? paymentIntentClientSecret = await _createPaymentIntent(
         amount,
         "myr",
       );
-      if (paymentIntentClientSecret! == null) return;
+      if (paymentIntentClientSecret! == null) return false;
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
           paymentIntentClientSecret: paymentIntentClientSecret,
           merchantDisplayName: "Car Service",
         ),
       );
-      await _processPayment();
+      return await _processPayment();
     } catch (e) {
       print(e);
     }
+    return false;
   }
 
   String _calculateAmount(int amount) {
     return (amount * 100).toString();
   }
 
-  Future<void> _processPayment() async {
+  Future<bool> _processPayment() async {
     try {
       await Stripe.instance.presentPaymentSheet();
+      return true;
     } catch (e) {
-      print(e);
+      print("Error process payment: $e");
     }
+    return false;
   }
 
   Future<String?> _createPaymentIntent(int amount, String currency) async {

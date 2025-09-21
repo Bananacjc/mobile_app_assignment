@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_app_assignment/core/theme/app_decoration.dart';
 import 'package:mobile_app_assignment/model/service.dart';
+import 'package:mobile_app_assignment/services/service_service.dart';
 import 'package:mobile_app_assignment/services/stripe_service.dart';
 import 'package:mobile_app_assignment/widgets/appbar_widget.dart';
 import 'package:mobile_app_assignment/widgets/app_button_widget.dart';
@@ -111,6 +112,7 @@ class PaymentView extends StatefulWidget {
 
 class _PaymentViewState extends State<PaymentView> {
   final String _title = "Payment"; // Default title
+  final ServiceService ss = ServiceService();
 
   @override
   void initState() {
@@ -138,18 +140,22 @@ class _PaymentViewState extends State<PaymentView> {
               text: "Pay",
               onPressed: () async {
                 final currentContext = context;
-                await StripeService.instance.makePayment(
+                bool paymentSuccess = await StripeService.instance.makePayment(
                   widget.service.fee!.toInt(),
                 );
-                if (currentContext.mounted) {
-                  UiHelper.showSnackBar(
-                    currentContext,
-                    "Thank you for your payment!",
-                    isError: false,
-                  );
+                if(paymentSuccess){
+                  ss.updateServiceStatus(widget.service.serviceId, "paid");
+                  if (currentContext.mounted) {
+                    UiHelper.showSnackBar(
+                      currentContext,
+                      "Thank you for your payment!",
+                      isError: false,
+                    );
 
-                  Navigator.pop(currentContext, true);
+                    Navigator.pop(currentContext, true);
+                  }
                 }
+
               },
             ),
           ],
