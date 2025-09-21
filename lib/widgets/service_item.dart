@@ -14,7 +14,11 @@ class ServiceItem extends StatefulWidget {
   final Service service;
   final bool? inProgress;
 
-  const ServiceItem({super.key, required this.service, required this.inProgress});
+  const ServiceItem({
+    super.key,
+    required this.service,
+    required this.inProgress,
+  });
 
   @override
   State<StatefulWidget> createState() => _ServiceItemState();
@@ -39,7 +43,6 @@ class _ServiceItemState extends State<ServiceItem> {
   double defaultWidth = 360;
   double defaultHeight = 170;
 
-
   @override
   void initState() {
     super.initState();
@@ -47,23 +50,34 @@ class _ServiceItemState extends State<ServiceItem> {
 
     serviceTitle = widget.service.title ?? "Untitled";
     plateNoDisplay = widget.service.plateNo;
-    feeDisplay = widget.service.fee != null ? "RM ${widget.service.fee!.toStringAsFixed(2)}" : "";
-    DateTime? endAppointment = widget.service.appointmentDate != null && widget.service.duration != null
-        ? widget.service.appointmentDate!.add(Duration(minutes: widget.service.duration!))
+    feeDisplay = widget.service.fee != null
+        ? "RM ${widget.service.fee!.toStringAsFixed(2)}"
+        : "";
+    DateTime? endAppointment =
+        widget.service.appointmentDate != null &&
+            widget.service.duration != null
+        ? widget.service.appointmentDate!.add(
+            Duration(minutes: widget.service.duration!),
+          )
         : null;
     // if(now.isAfter(widget.service.appointmentDate!) && now.isBefore(endAppointment)){ // change to boolean check only
-    topRightCornerDisplay = DateFormat("dd MMM yyyy, h:mm a")
-        .format(widget.service.appointmentDate!.toUtc().add(const Duration(hours: 8)));
+    topRightCornerDisplay = DateFormat("dd MMM yyyy, h:mm a").format(
+      widget.service.appointmentDate!.toUtc().add(const Duration(hours: 8)),
+    );
 
     if (widget.inProgress == true) {
-      topRightCornerDisplay = serviceStatus[widget.service.status]; // display status instead of time
+      topRightCornerDisplay =
+          serviceStatus[widget
+              .service
+              .status]; // display status instead of time
 
       if (widget.service.status != "pending") {
         buttonDisplay = 1;
       }
 
       // middle-left display logic
-      middleLeftDisplay = "ETA ${DateFormat.jm().format(endAppointment!.toUtc().add(const Duration(hours: 8)))}";
+      middleLeftDisplay =
+          "ETA ${DateFormat.jm().format(endAppointment!.toUtc().add(const Duration(hours: 8)))}";
 
       if (widget.service.status == "pending") {
         buttonName = "Pay";
@@ -72,7 +86,6 @@ class _ServiceItemState extends State<ServiceItem> {
         feeDisplay = "";
         middleLeftDisplay = "";
       }
-
     } else if (widget.inProgress == false) {
       if (widget.service.status != "completed") {
         buttonName = "Reschedule";
@@ -89,7 +102,6 @@ class _ServiceItemState extends State<ServiceItem> {
           });
         });
       }
-
     } else {
       buttonDisplay = 0;
       defaultHeight = 115;
@@ -119,11 +131,16 @@ class _ServiceItemState extends State<ServiceItem> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColor.primaryGreen,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              minimumSize: Size(165,40),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              minimumSize: Size(165, 40),
             ),
             onPressed: action,
-            child: Text(buttonName!, style: TextStyle(color: AppColor.softWhite)),
+            child: Text(
+              buttonName!,
+              style: TextStyle(color: AppColor.softWhite),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -135,7 +152,10 @@ class _ServiceItemState extends State<ServiceItem> {
               minimumSize: Size(165, 40),
             ),
             onPressed: () {},
-            child: Text("View Details", style: TextStyle(color: AppColor.darkCharcoal)),
+            child: Text(
+              "View Details",
+              style: TextStyle(color: AppColor.darkCharcoal),
+            ),
           ),
         ],
       );
@@ -150,23 +170,51 @@ class _ServiceItemState extends State<ServiceItem> {
           minimumSize: Size(340, 40),
         ),
         onPressed: () {},
-        child: Text("View Details", style: TextStyle(color: AppColor.darkCharcoal)),
+        child: Text(
+          "View Details",
+          style: TextStyle(color: AppColor.darkCharcoal),
+        ),
       );
-    } else { // buttonDisplay == 0
+    } else {
+      // buttonDisplay == 0
       return null;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
+    final navigationProvider = Provider.of<NavigationProvider>(
+      context,
+      listen: false,
+    );
     final Map<String, VoidCallback> actions = {
-      "pay": () => Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentView(service: widget.service,))),
-      // "reschedule": () => Navigator.push(
-      //   context,
-      //   MaterialPageRoute(builder: (_) => RescheduleView()),
-      // ),
-      "feedback": () => Navigator.push(context, MaterialPageRoute(builder: (context) => FeedbackView(service: widget.service,))),
+      "pay": () async {
+        final result = Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentView(service: widget.service),
+          ),
+        );
+        if (result == true) {
+          setState(() {
+            buttonDisplay = 1; // Hide button row
+          });
+        }
+      },
+      "feedback": () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FeedbackView(service: widget.service),
+          ),
+        );
+
+        if (result == true) {
+          setState(() {
+            buttonDisplay = 1; // Hide button row
+          });
+        }
+      },
     };
     return Padding(
       padding: EdgeInsets.only(bottom: 20),
@@ -174,7 +222,13 @@ class _ServiceItemState extends State<ServiceItem> {
         decoration: BoxDecoration(
           color: AppColor.softWhite,
           borderRadius: BorderRadius.circular(15),
-          boxShadow: [BoxShadow(color: AppColor.darkCharcoal.withAlpha(63), blurRadius: 10, offset: const Offset(0, 0))],
+          boxShadow: [
+            BoxShadow(
+              color: AppColor.darkCharcoal.withAlpha(63),
+              blurRadius: 10,
+              offset: const Offset(0, 0),
+            ),
+          ],
         ),
         width: defaultWidth,
         height: defaultHeight,
@@ -192,15 +246,25 @@ class _ServiceItemState extends State<ServiceItem> {
                         child: Container(
                           width: 50,
                           height: 50,
-                          decoration: BoxDecoration(color: AppColor.primaryGreen, borderRadius: BorderRadius.circular(8)),
-                          child: Icon(Icons.add, color: AppColor.softWhite, size: 36),
+                          decoration: BoxDecoration(
+                            color: AppColor.primaryGreen,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.add,
+                            color: AppColor.softWhite,
+                            size: 36,
+                          ),
                         ),
                       ),
                     ),
                     Container(
                       padding: EdgeInsets.only(left: 10),
                       width: 100,
-                      child: Text(serviceTitle, style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text(
+                        serviceTitle,
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ],
                 ),
@@ -209,13 +273,19 @@ class _ServiceItemState extends State<ServiceItem> {
                   children: [
                     Padding(
                       padding: EdgeInsets.only(top: 10, right: 10),
-                      child: Text(topRightCornerDisplay?.toUpperCase() ?? "-", style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text(
+                        topRightCornerDisplay?.toUpperCase() ?? "-",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                     Padding(
                       padding: EdgeInsets.only(top: 5, right: 10),
                       child: Container(
                         //color: AppColor.darkCharcoal,
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColor.darkCharcoal,
                           borderRadius: BorderRadius.circular(4),
@@ -223,7 +293,10 @@ class _ServiceItemState extends State<ServiceItem> {
                         ),
                         child: Text(
                           plateNoDisplay,
-                          style: TextStyle(color: AppColor.softWhite, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: AppColor.softWhite,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -248,13 +321,19 @@ class _ServiceItemState extends State<ServiceItem> {
                     children: [
                       Align(
                         alignment: Alignment.centerLeft,
-                        child: Text(middleLeftDisplay ?? "", style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: Text(
+                          middleLeftDisplay ?? "",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                       Align(
                         alignment: Alignment.centerRight,
                         child: Text(
                           feeDisplay ?? "",
-                          style: TextStyle(fontWeight: FontWeight.bold, color: AppColor.primaryGreen),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppColor.primaryGreen,
+                          ),
                         ),
                       ),
                     ],
@@ -262,7 +341,9 @@ class _ServiceItemState extends State<ServiceItem> {
                 ),
                 Padding(
                   padding: EdgeInsets.only(top: 10),
-                  child: buttonName != null || buttonName!.isNotEmpty ? buttonRow(actions[buttonName!.toLowerCase()]) : buttonRow(null),
+                  child: buttonName != null || buttonName!.isNotEmpty
+                      ? buttonRow(actions[buttonName!.toLowerCase()])
+                      : buttonRow(null),
                 ),
               ],
             ),

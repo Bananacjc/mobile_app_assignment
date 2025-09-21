@@ -325,7 +325,8 @@ class _FeedbackViewState extends State<FeedbackView> {
                       "Thank you for your feedback!",
                       isError: false,
                     );
-                    Navigator.pop(currentContext);
+
+                    Navigator.pop(currentContext, true);
                   }
                 },
               ),
