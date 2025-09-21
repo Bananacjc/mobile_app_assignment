@@ -181,12 +181,18 @@ class _ProfileViewState extends State<ProfileView> {
 
                           try {
                             await AuthService().signOut();
+
+                            // Clear saved credentials
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.remove('saved_email');
+                            await prefs.remove('saved_password');
+
                             if (!context.mounted) return;
                             Navigator.of(context).pushAndRemoveUntil(
                               MaterialPageRoute(
                                 builder: (_) => const LoginView(),
                               ),
-                              (route) => false,
+                                  (route) => false,
                             );
                           } catch (e) {
                             if (!context.mounted) return;
@@ -213,6 +219,7 @@ class _ProfileViewState extends State<ProfileView> {
                       ),
                     ),
                   ),
+
                 ],
               ),
             ),

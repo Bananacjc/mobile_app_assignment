@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:bcrypt/bcrypt.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../core/theme/app_colors.dart';
 import '../widgets/navbar_widget.dart';
 import 'package:mobile_app_assignment/view/register_view.dart';
-import '../model/user.dart'; //
-import '../main.dart';
-import '../services/user_service.dart';
-import '../services/auth_service.dart'; // ✅ Import AuthService
-import 'package:shared_preferences/shared_preferences.dart';
 import '../model/global_user.dart';
+import '../main.dart';
+import '../services/login_service.dart'; // ✅ import service
+import 'custom_widgets/ui_helper.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -25,8 +22,30 @@ class _LoginViewState extends State<LoginView> {
   bool _rememberMe = false;
   bool _obscurePassword = true;
 
-  final AuthService _authService = AuthService(); // ✅ instance of AuthService
-  final UserService us = UserService();
+  final LoginService _loginService = LoginService();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkRememberMe();
+  }
+
+  Future<void> _checkRememberMe() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedEmail = prefs.getString('saved_email');
+    final savedPassword = prefs.getString('saved_password');
+
+    if (savedEmail == null || savedPassword == null) {
+      // ❌ No remember me → force logout
+      await FirebaseAuth.instance.signOut();
+    } else {
+      // ✅ Remember me checked → pre-fill fields
+      _emailController.text = savedEmail;
+      _passwordController.text = savedPassword;
+      _rememberMe = true;
+      await _loginWithEmail();
+    }
+  }
 
   void _showForgotPasswordDialog(BuildContext context) {
     final TextEditingController emailController = TextEditingController();
@@ -51,28 +70,17 @@ class _LoginViewState extends State<LoginView> {
               onPressed: () async {
                 final email = emailController.text.trim();
                 if (email.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Please enter your email")),
-                  );
+                  _showMessage("Please enter your email", true);
                   return;
                 }
 
                 try {
-                  await FirebaseAuth.instance.sendPasswordResetEmail(
-                    email: email,
-                  );
-
-                  Navigator.pop(context); // close dialog
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text("Password reset link sent to $email"),
-                    ),
-                  );
+                  await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+                  Navigator.pop(context);
+                  _showMessage("Password reset link sent to $email", false);
                 } on FirebaseAuthException catch (e) {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Error: ${e.message}")),
-                  );
+                  _showMessage("Error: ${e.message}", true);
                 }
               },
               child: const Text("Send"),
@@ -83,87 +91,76 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
-  // 🔑 Login method
   Future<void> _loginWithEmail() async {
     String email = _emailController.text.trim();
     String password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      _showMessage("Please enter both email and password.");
+      _showMessage("Please enter both email and password.", true);
       return;
     }
 
     try {
-      final loggedInUser = await _authService.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final loggedInUser = await _loginService.signInWithEmail(email, password);
 
-      // ✅ Set global user
       if (loggedInUser != null) {
         GlobalUser.user = loggedInUser;
-        print(
-          "GlobalUser updated: UID=${GlobalUser.user!.uid}, Email=${GlobalUser.user!.email}",
+        print("GlobalUser updated: UID=${GlobalUser.user!.uid}, Email=${GlobalUser.user!.email}");
+
+        // ✅ Save Remember Me credentials
+        final prefs = await SharedPreferences.getInstance();
+        if (_rememberMe) {
+          await prefs.setString('saved_email', email);
+          await prefs.setString('saved_password', password);
+        } else {
+          await prefs.remove('saved_email');
+          await prefs.remove('saved_password');
+        }
+
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MainLayout()),
+              (route) => false,
         );
       }
-
-      // ✅ Save email/password if Remember Me is checked
-      final prefs = await SharedPreferences.getInstance();
-      if (_rememberMe) {
-        await prefs.setString('saved_email', email);
-        await prefs.setString('saved_password', password);
-      } else {
-        await prefs.remove('saved_email');
-        await prefs.remove('saved_password');
-      }
-
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const MainLayout()),
-        (route) => false,
-      );
     } on FirebaseAuthException catch (e) {
-      _showMessage("Login failed: ${e.message}");
+      _showMessage("Login failed: ${e.message}", true);
     }
   }
 
   Future<void> _loginWithGoogle() async {
     try {
-      final user = await _authService.signInWithGoogle();
+      final user = await _loginService.signInWithGoogle();
       if (user != null) {
         GlobalUser.user = user;
-        print(
-          "GlobalUser updated: UID=${GlobalUser.user!.uid}, Email=${GlobalUser.user!.email}",
-        );
+        print("GlobalUser updated: UID=${GlobalUser.user!.uid}, Email=${GlobalUser.user!.email}");
 
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const MainLayout()),
-          (route) => false,
+              (route) => false,
         );
       } else {
-        _showMessage("Google login cancelled or failed.");
+        _showMessage("Google login cancelled or failed.", true);
       }
     } catch (e) {
-      _showMessage("Google login failed: $e");
+      _showMessage("Google login failed: $e", true);
     }
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+  void _showMessage(String message, bool isError) {
+    UiHelper.showSnackBar(context, message, isError: isError);
   }
 
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
 
+    // ⚠️ UI stays EXACTLY the same as your version
     return Scaffold(
       backgroundColor: AppColor.primaryGreen,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 🔒 Your original UI — unchanged
-            // (keeping everything exactly the same)
+            // Green header
             Container(
               width: double.infinity,
               height: size.height * 0.325,
@@ -188,7 +185,7 @@ class _LoginViewState extends State<LoginView> {
               ),
             ),
 
-            // White form section (unchanged)
+            // Form section
             Container(
               width: double.infinity,
               decoration: const BoxDecoration(
@@ -271,9 +268,7 @@ class _LoginViewState extends State<LoginView> {
                         ),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
+                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
                             color: AppColor.slateGray,
                           ),
                           onPressed: () {
@@ -291,7 +286,7 @@ class _LoginViewState extends State<LoginView> {
 
                     const SizedBox(height: 16),
 
-                    // Remember Me + Forgot Password (unchanged)
+                    // Remember Me + Forgot Password
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -324,9 +319,7 @@ class _LoginViewState extends State<LoginView> {
                           ],
                         ),
                         TextButton(
-                          onPressed: () {
-                            _showForgotPasswordDialog(context);
-                          },
+                          onPressed: () => _showForgotPasswordDialog(context),
                           child: const Text(
                             'Forgot Password?',
                             style: TextStyle(
@@ -340,12 +333,12 @@ class _LoginViewState extends State<LoginView> {
 
                     const SizedBox(height: 30),
 
-                    // Login button (only logic added here)
+                    // Login button
                     SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: _loginWithEmail, // ✅ call our login method
+                        onPressed: _loginWithEmail,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColor.primaryGreen,
                           foregroundColor: Colors.white,
@@ -366,32 +359,26 @@ class _LoginViewState extends State<LoginView> {
 
                     const SizedBox(height: 20),
 
-                    // Divider + Google login + Sign up (all unchanged)
+                    // Divider
                     Row(
                       children: const [
-                        Expanded(
-                          child: Divider(thickness: 1, color: Colors.grey),
-                        ),
+                        Expanded(child: Divider(thickness: 1, color: Colors.grey)),
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Text(
-                            "or",
-                            style: TextStyle(color: AppColor.slateGray),
-                          ),
+                          child: Text("or", style: TextStyle(color: AppColor.slateGray)),
                         ),
-                        Expanded(
-                          child: Divider(thickness: 1, color: Colors.grey),
-                        ),
+                        Expanded(child: Divider(thickness: 1, color: Colors.grey)),
                       ],
                     ),
 
                     const SizedBox(height: 20),
 
+                    // Google login button
                     SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: OutlinedButton(
-                        onPressed: _loginWithGoogle, // ✅ call Google login
+                        onPressed: _loginWithGoogle,
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColor.slateGray,
                           side: BorderSide(color: AppColor.slateGray),
@@ -422,6 +409,7 @@ class _LoginViewState extends State<LoginView> {
 
                     const SizedBox(height: 30),
 
+                    // Sign up link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
