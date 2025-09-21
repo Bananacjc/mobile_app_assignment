@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app_assignment/view/custom_widgets/ui_helper.dart';
 import 'package:provider/provider.dart';
 import '../core/theme/app_colors.dart';
 import '../provider/navigation_provider.dart';
@@ -329,6 +330,7 @@ class _BookServiceViewState extends State<BookServiceView> {
                     fee: null,
                     duration: null,
                     appointmentDate: appointmentDate,
+                    plateNo: '',
                   );
 
                   final ref = await ServiceService().addService(service);
@@ -337,19 +339,14 @@ class _BookServiceViewState extends State<BookServiceView> {
 
                   if (ref != null) {
                     // show a toast/snack first
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Service booked!")),
-                    );
+                    UiHelper.showSnackBar(context, "Service booked!");
 
                     // ✅ close using NavigationProvider (not Navigator.pop)
                     context.read<NavigationProvider>().goBack();
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          "Failed to book service. Please try again.",
-                        ),
-                      ),
+                    UiHelper.showSnackBar(
+                      context,
+                      "Failed to book service. Please try again.",
                     );
                   }
                 },

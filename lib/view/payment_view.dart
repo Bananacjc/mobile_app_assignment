@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_app_assignment/core/theme/app_decoration.dart';
+import 'package:mobile_app_assignment/services/stripe_service.dart';
 import 'package:mobile_app_assignment/widgets/appbar_widget.dart';
 import 'package:mobile_app_assignment/widgets/app_button_widget.dart';
 import 'package:provider/provider.dart';
@@ -172,7 +173,6 @@ class PaymentMethodItem extends StatelessWidget {
 }
 
 class PaymentView extends StatefulWidget {
-
   const PaymentView({super.key});
 
   @override
@@ -185,7 +185,6 @@ class _PaymentViewState extends State<PaymentView> {
   @override
   void initState() {
     super.initState();
-
   }
 
   @override
@@ -195,7 +194,7 @@ class _PaymentViewState extends State<PaymentView> {
 
     return Scaffold(
       backgroundColor: AppColor.softWhite,
-      appBar: AppBarWidget(title: _title, showBackButton: true, onBackPressed: () => navigationProvider.goBack()),
+      appBar: AppBarWidget(title: _title, showBackButton: true),
       body: Center(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -205,7 +204,12 @@ class _PaymentViewState extends State<PaymentView> {
             Padding(padding: EdgeInsets.only(top: 20)),
             PaymentMethodItem(),
             Padding(padding: EdgeInsets.only(top: 20)),
-            AppButtonWidget(text: "Pay", onPressed: () {}),
+            AppButtonWidget(
+              text: "Pay",
+              onPressed: () {
+                StripeService.instance.makePayment(10);
+              },
+            ),
           ],
         ),
       ),

@@ -24,6 +24,7 @@ class UiHelper {
       }) {
     // Determine the background color based on whether it's an error message.
     final Color backgroundColor = isError ? Colors.redAccent : Colors.green;
+    final Size size = MediaQuery.of(context).size;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -36,8 +37,11 @@ class UiHelper {
           right: 16,
         ),
         backgroundColor: backgroundColor,
-        duration: const Duration(milliseconds: 2500),
+        duration: const Duration(milliseconds: 2000),
+        elevation: 6.0,
       ),
     );
+
+
   }
 }

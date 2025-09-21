@@ -6,11 +6,13 @@ import '../core/theme/app_colors.dart';
 import '../provider/navigation_provider.dart';
 
 class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
+  final bool showAppBar;
   final String title;
   final bool showBackButton;
   final VoidCallback? onBackPressed; // Make this required or provide default
 
   const AppBarWidget({
+    this.showAppBar = true,
     super.key,
     required this.title,
     this.showBackButton = false,
@@ -22,7 +24,9 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
+    final navigationProvider = Provider.of<NavigationProvider>(context);
+    
+    return showAppBar ? AppBar(
       title: Padding(
         padding: EdgeInsets.only(top: 20),
         child: Text(
@@ -39,11 +43,17 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
         padding: EdgeInsets.only(left: 10, top: 20),
         child: IconButton(
           icon: Icon(Icons.arrow_back, color: AppColor.softWhite),
-          onPressed: onBackPressed ?? () => Navigator.of(context).pop(),
+          onPressed: onBackPressed ?? () {
+            if(navigationProvider.showFullPage) {
+              navigationProvider.goBack();
+            } else {
+              Navigator.of(context).pop();
+            }
+          },
         ),
       )
           : null,
       backgroundColor: AppColor.primaryGreen,
-    );
+    ): const SizedBox.shrink();
   }
 }

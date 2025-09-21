@@ -3,11 +3,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:mobile_app_assignment/view/custom_widgets/ui_helper.dart';
 
 import 'firebase_options.dart';
 import 'core/theme/app_colors.dart';
 import 'view/login_view.dart';
-import 'view/home_view.dart';            // only if you need direct access
+import 'view/home_view.dart'; // only if you need direct access
 import 'view/service_view.dart';
 import 'view/profile_view.dart';
 import 'widgets/navbar_widget.dart';
@@ -23,7 +24,7 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
-Future<void> _stripeSetup() async{
+Future<void> _stripeSetup() async {
   Stripe.publishableKey = dotenv.get('STRIPE_PUBLISHABLE_KEY');
 }
 
@@ -44,7 +45,10 @@ class MyApp extends StatelessWidget {
           ),
           inputDecorationTheme: InputDecorationTheme(
             focusedBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: AppColor.primaryGreen, width: 2),
+              borderSide: const BorderSide(
+                color: AppColor.primaryGreen,
+                width: 2,
+              ),
               borderRadius: BorderRadius.circular(8),
             ),
             labelStyle: const TextStyle(color: AppColor.primaryGreen),
@@ -55,7 +59,7 @@ class MyApp extends StatelessWidget {
             selectionHandleColor: AppColor.primaryGreen,
           ),
         ),
-        home: const _AuthGate(),   // <- decide LoginView vs MainLayout here
+        home: const _AuthGate(), // <- decide LoginView vs MainLayout here
       ),
     );
   }
@@ -78,10 +82,10 @@ class _AuthGate extends StatelessWidget {
 
         final user = snap.data;
         if (user == null) {
-          GlobalUser.logout();          // keep your global in sync
-          return const LoginView();      // NOT logged in -> Login
+          GlobalUser.logout(); // keep your global in sync
+          return const LoginView(); // NOT logged in -> Login
         } else {
-          GlobalUser.user = user;        // logged in -> your app
+          GlobalUser.user = user; // logged in -> your app
           return const MainLayout();
         }
       },
