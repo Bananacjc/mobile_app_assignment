@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app_assignment/model/global_user.dart';
 import 'package:mobile_app_assignment/model/service.dart';
-import 'package:mobile_app_assignment/services/service_service.dart';
+import '../services/service_service.dart';
 import 'package:provider/provider.dart';
 import '../core/theme/app_colors.dart';
+import '../model/global_user.dart';
 import '../model/user.dart';
 import '../services/user_service.dart';
 import '../provider/navigation_provider.dart';
@@ -53,7 +54,6 @@ class _ServiceViewState extends State<ServiceView> {
 
   @override
   Widget build(BuildContext context) {
-    // Size size = MediaQuery.of(context).size;
     final navigationProvider = Provider.of<NavigationProvider>(
       context,
       listen: false,

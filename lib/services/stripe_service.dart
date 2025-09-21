@@ -9,10 +9,16 @@ class StripeService {
 
   Future<void> makePayment(int amount) async {
     try {
-      String? paymentIntentClientSecret = await _createPaymentIntent(amount, "myr");
+      String? paymentIntentClientSecret = await _createPaymentIntent(
+        amount,
+        "myr",
+      );
       if (paymentIntentClientSecret! == null) return;
       await Stripe.instance.initPaymentSheet(
-        paymentSheetParameters: SetupPaymentSheetParameters(paymentIntentClientSecret: paymentIntentClientSecret, merchantDisplayName: "Car Service"),
+        paymentSheetParameters: SetupPaymentSheetParameters(
+          paymentIntentClientSecret: paymentIntentClientSecret,
+          merchantDisplayName: "Car Service",
+        ),
       );
       await _processPayment();
     } catch (e) {
@@ -35,13 +41,19 @@ class StripeService {
   Future<String?> _createPaymentIntent(int amount, String currency) async {
     try {
       final Dio dio = Dio();
-      Map<String, dynamic> data = {"amount": _calculateAmount(amount), "currency": currency};
+      Map<String, dynamic> data = {
+        "amount": _calculateAmount(amount),
+        "currency": currency,
+      };
       var response = await dio.post(
         "https://api.stripe.com/v1/payment_intents",
         data: data,
         options: Options(
           contentType: Headers.formUrlEncodedContentType,
-          headers: {"Authorization": "Bearer ${dotenv.get("STRIPE_SECRET_KEY")}", "Content-Type": "application/x-www-form-urlencoded"},
+          headers: {
+            "Authorization": "Bearer ${dotenv.get("STRIPE_SECRET_KEY")}",
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
         ),
       );
       if (response.data != null) {

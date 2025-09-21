@@ -10,6 +10,7 @@ import '../provider/navigation_provider.dart';
 import '../services/service_service.dart';
 import '../services/vehicle_service.dart';
 import 'vehicle_view.dart';
+import 'custom_widgets/ui_helper.dart';
 
 class BookServiceView extends StatefulWidget {
   const BookServiceView({super.key});
@@ -58,9 +59,6 @@ class _BookServiceViewState extends State<BookServiceView> {
         ),
       );
 
-  void _toast(String msg) =>
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -102,7 +100,7 @@ class _BookServiceViewState extends State<BookServiceView> {
   Future<void> _openVehiclePicker() async {
     final user = GlobalUser.user;
     if (user == null) {
-      _toast('You must be logged in to pick a vehicle.');
+      UiHelper.showSnackBar(context, 'You must be logged in to pick a vehicle.');
       return;
     }
 
@@ -119,17 +117,17 @@ class _BookServiceViewState extends State<BookServiceView> {
           child: Column(
             children: [
               const SizedBox(height: 12),
-              const Text('Select Vehicle',
-                  style:
-                      TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              const Text(
+                'Select Vehicle',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 8),
               Expanded(
                 child: StreamBuilder<List<Vehicle>>(
                   stream: VehicleService().streamUserVehicles(user.uid),
                   builder: (context, snap) {
                     if (snap.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                          child: CircularProgressIndicator());
+                      return const Center(child: CircularProgressIndicator());
                     }
                     if (snap.hasError) {
                       return Center(child: Text('Error: ${snap.error}'));
@@ -140,9 +138,7 @@ class _BookServiceViewState extends State<BookServiceView> {
                         onAddVehicle: () {
                           Navigator.pop(ctx);
                           Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => VehicleView(),
-                            ),
+                            MaterialPageRoute(builder: (_) => VehicleView()),
                           );
                         },
                       );
@@ -150,8 +146,7 @@ class _BookServiceViewState extends State<BookServiceView> {
                     return ListView.separated(
                       padding: const EdgeInsets.all(16),
                       itemCount: vehicles.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(height: 10),
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
                       itemBuilder: (_, i) {
                         final v = vehicles[i];
                         final hex = (v.color ?? '#A4A4A4').toUpperCase();
@@ -176,8 +171,7 @@ class _BookServiceViewState extends State<BookServiceView> {
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color:
-                                      Colors.black.withOpacity(0.08),
+                                  color: Colors.black.withOpacity(0.08),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
                                 ),
@@ -190,13 +184,13 @@ class _BookServiceViewState extends State<BookServiceView> {
                                   height: 46,
                                   decoration: BoxDecoration(
                                     color: tileBg,
-                                    borderRadius:
-                                        BorderRadius.circular(8),
-                                    border: Border.all(
-                                        color: border, width: 2),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: border, width: 2),
                                   ),
-                                  child: Icon(Icons.directions_car,
-                                      color: icon),
+                                  child: Icon(
+                                    Icons.directions_car,
+                                    color: icon,
+                                  ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -204,16 +198,20 @@ class _BookServiceViewState extends State<BookServiceView> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(v.brand ?? 'Brand',
-                                          style: const TextStyle(
-                                              fontWeight:
-                                                  FontWeight.w700)),
+                                      Text(
+                                        v.brand ?? 'Brand',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
                                       const SizedBox(height: 4),
-                                      Text(v.plateNo.toUpperCase(),
-                                          style: const TextStyle(
-                                              color: AppColor.slateGray,
-                                              fontWeight:
-                                                  FontWeight.w600)),
+                                      Text(
+                                        v.plateNo.toUpperCase(),
+                                        style: const TextStyle(
+                                          color: AppColor.slateGray,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -252,19 +250,19 @@ class _BookServiceViewState extends State<BookServiceView> {
 
   void _validateOrWarnThenSubmit() async {
     if (_plateNo == null) {
-      _toast('Please pick a vehicle.');
+      UiHelper.showSnackBar(context, 'Please pick a vehicle.');
       return;
     }
     if (_selectedService == null) {
-      _toast('Please select a service.');
+      UiHelper.showSnackBar(context, 'Please select a service.');
       return;
     }
     if (_selectedDate == null) {
-      _toast('Please choose a date.');
+      UiHelper.showSnackBar(context, 'Please choose a date.');
       return;
     }
     if (_selectedTime == null) {
-      _toast('Please choose a time.');
+      UiHelper.showSnackBar(context, 'Please choose a time.');
       return;
     }
     final appt = DateTime(
@@ -275,13 +273,13 @@ class _BookServiceViewState extends State<BookServiceView> {
       _selectedTime!.minute,
     );
     if (!appt.isAfter(DateTime.now())) {
-      _toast('Please choose a future date & time.');
+      UiHelper.showSnackBar(context, 'Please choose a future date & time.');
       return;
     }
 
     final user = GlobalUser.user;
     if (user == null) {
-      _toast('You must be logged in to book.');
+      UiHelper.showSnackBar(context, 'You must be logged in to book.');
       return;
     }
 
@@ -303,15 +301,18 @@ class _BookServiceViewState extends State<BookServiceView> {
     if (!mounted) return;
 
     if (ref != null) {
-      _toast('Service booked!');
+      UiHelper.showSnackBar(context, 'Service booked!', isError: false);
       context.read<NavigationProvider>().goBack();
     } else {
-      _toast('Failed to book service. Please try again.');
+      UiHelper.showSnackBar(
+          context, 'Failed to book service. Please try again.');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final navigationProvider =
+        Provider.of<NavigationProvider>(context, listen: false);
     final nav = context.read<NavigationProvider>();
     final user = GlobalUser.user;
 
@@ -349,17 +350,15 @@ class _BookServiceViewState extends State<BookServiceView> {
                 children: [
                   // -------- VEHICLE (defaults to first) --------
                   StreamBuilder<List<Vehicle>>(
-                    stream:
-                        VehicleService().streamUserVehicles(user.uid),
+                    stream: VehicleService().streamUserVehicles(user.uid),
                     builder: (context, snap) {
-                      if (snap.connectionState ==
-                          ConnectionState.waiting) {
+                      if (snap.connectionState == ConnectionState.waiting) {
                         return _VehicleCardSkeleton();
                       }
                       if (snap.hasError) {
                         return Center(
-                            child: Text(
-                                'Error loading vehicles: ${snap.error}'));
+                          child: Text('Error loading vehicles: ${snap.error}'),
+                        );
                       }
                       final vehicles = snap.data ?? [];
 
@@ -367,9 +366,8 @@ class _BookServiceViewState extends State<BookServiceView> {
                         // No vehicles -> empty state with link to VehicleView
                         return _NoVehicleMessage(
                           onAddVehicle: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                  builder: (_) => VehicleView()),
+                            navigationProvider.showFullPageContent(
+                              VehicleView(),
                             );
                           },
                         );
@@ -381,9 +379,7 @@ class _BookServiceViewState extends State<BookServiceView> {
                           vehicles.isNotEmpty) {
                         _didSetDefault = true;
                         final first = vehicles.first;
-                        // Schedule setState after build to avoid layout thrash.
-                        WidgetsBinding.instance
-                            .addPostFrameCallback((_) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
                           if (!mounted) return;
                           setState(() {
                             _plateNo = first.plateNo;
@@ -397,10 +393,8 @@ class _BookServiceViewState extends State<BookServiceView> {
                       final white = _isWhite(hex);
                       final borderColor =
                           white ? Colors.black : _fromHex(hex);
-                      final tileBg =
-                          white ? Colors.black : Colors.white;
-                      final iconColor =
-                          white ? Colors.white : borderColor;
+                      final tileBg = white ? Colors.black : Colors.white;
+                      final iconColor = white ? Colors.white : borderColor;
 
                       return Container(
                         padding: const EdgeInsets.all(14),
@@ -425,15 +419,19 @@ class _BookServiceViewState extends State<BookServiceView> {
                                 color: tileBg,
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                    color: borderColor, width: 2),
+                                  color: borderColor,
+                                  width: 2,
+                                ),
                               ),
-                              child: Icon(Icons.directions_car,
-                                  color: iconColor, size: 28),
+                              child: Icon(
+                                Icons.directions_car,
+                                color: iconColor,
+                                size: 28,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   _brand ?? 'Brand',
@@ -445,11 +443,12 @@ class _BookServiceViewState extends State<BookServiceView> {
                                 const SizedBox(height: 5),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 5),
+                                    horizontal: 8,
+                                    vertical: 5,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: AppColor.darkCharcoal,
-                                    borderRadius:
-                                        BorderRadius.circular(4),
+                                    borderRadius: BorderRadius.circular(4),
                                     border: Border.all(color: Colors.black),
                                   ),
                                   child: Text(
@@ -470,11 +469,15 @@ class _BookServiceViewState extends State<BookServiceView> {
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 14, vertical: 10),
+                                  horizontal: 14,
+                                  vertical: 10,
+                                ),
                               ),
                               onPressed: _openVehiclePicker,
-                              child: const Text('Switch',
-                                  style: TextStyle(color: Colors.white)),
+                              child: const Text(
+                                'Switch',
+                                style: TextStyle(color: Colors.white),
+                              ),
                             ),
                           ],
                         ),
@@ -503,12 +506,7 @@ class _BookServiceViewState extends State<BookServiceView> {
                       'Alignment & Balancing',
                       'Spark Plug Replacement',
                       'Exhaust Inspection',
-                    ]
-                        .map((s) => DropdownMenuItem(
-                              value: s,
-                              child: Text(s),
-                            ))
-                        .toList(),
+                    ].map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
                     onChanged: (v) => setState(() => _selectedService = v),
                   ),
                   const SizedBox(height: 16),
@@ -554,7 +552,8 @@ class _BookServiceViewState extends State<BookServiceView> {
                     controller: _notesController,
                     maxLines: 3,
                     decoration: _flatInput(
-                        'Describe any specific issues or requirements...'),
+                      'Describe any specific issues or requirements...',
+                    ),
                   ),
                   const SizedBox(height: 20),
 
@@ -569,9 +568,7 @@ class _BookServiceViewState extends State<BookServiceView> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      onPressed: _formLooksValid()
-                          ? _validateOrWarnThenSubmit
-                          : () => _validateOrWarnThenSubmit(),
+                      onPressed: _validateOrWarnThenSubmit,
                       child: const Text(
                         'Book Service',
                         style: TextStyle(
@@ -604,23 +601,28 @@ class _NoVehicleMessage extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.07),
-              blurRadius: 8,
-              offset: const Offset(0, 2)),
+            color: Colors.black.withOpacity(0.07),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
         children: [
           const SizedBox(height: 8),
-          const Icon(Icons.directions_car_filled,
-              size: 56, color: AppColor.slateGray),
+          const Icon(
+            Icons.directions_car_filled,
+            size: 56,
+            color: AppColor.slateGray,
+          ),
           const SizedBox(height: 10),
           const Text(
             'No vehicles found',
             style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: AppColor.darkCharcoal),
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColor.darkCharcoal,
+            ),
           ),
           const SizedBox(height: 6),
           const Text(
@@ -635,7 +637,8 @@ class _NoVehicleMessage extends StatelessWidget {
               backgroundColor: AppColor.primaryGreen,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: const Text('Go to My Vehicles'),
           ),

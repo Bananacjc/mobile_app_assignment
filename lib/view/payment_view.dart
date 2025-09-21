@@ -9,6 +9,7 @@ import 'package:mobile_app_assignment/widgets/service_item.dart';
 import 'package:provider/provider.dart';
 import '../core/theme/app_colors.dart';
 import '../provider/navigation_provider.dart';
+import 'custom_widgets/ui_helper.dart';
 
 class PaymentMethodItem extends StatelessWidget {
   const PaymentMethodItem({super.key});
@@ -27,7 +28,11 @@ class PaymentMethodItem extends StatelessWidget {
           children: [
             Text(
               "Payment Method",
-              style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14, color: AppColor.darkCharcoal),
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: AppColor.darkCharcoal,
+              ),
             ),
             Padding(padding: EdgeInsets.only(top: 16)),
             Row(
@@ -39,7 +44,11 @@ class PaymentMethodItem extends StatelessWidget {
                     Padding(padding: EdgeInsets.only(left: 10)),
                     Text(
                       "Credit / Debit Card",
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppColor.darkCharcoal, fontSize: 14),
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        color: AppColor.darkCharcoal,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
@@ -57,7 +66,11 @@ class PaymentMethodItem extends StatelessWidget {
                     Padding(padding: EdgeInsets.only(left: 10)),
                     Text(
                       "E-Wallet",
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppColor.darkCharcoal, fontSize: 14),
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        color: AppColor.darkCharcoal,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
@@ -73,7 +86,11 @@ class PaymentMethodItem extends StatelessWidget {
                 Padding(padding: EdgeInsets.only(left: 10)),
                 Text(
                   "Cash",
-                  style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppColor.darkCharcoal, fontSize: 14),
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                    color: AppColor.darkCharcoal,
+                    fontSize: 14,
+                  ),
                 ),
               ],
             ),
@@ -119,8 +136,20 @@ class _PaymentViewState extends State<PaymentView> {
             Padding(padding: EdgeInsets.only(top: 20)),
             AppButtonWidget(
               text: "Pay",
-              onPressed: () {
-                StripeService.instance.makePayment(widget.service.fee!.toInt());
+              onPressed: () async {
+                final currentContext = context;
+                await StripeService.instance.makePayment(
+                  widget.service.fee!.toInt(),
+                );
+                if (currentContext.mounted) {
+                  UiHelper.showSnackBar(
+                    currentContext,
+                    "Thank you for your payment!",
+                    isError: false,
+                  );
+
+                  Navigator.pop(currentContext, true);
+                }
               },
             ),
           ],
