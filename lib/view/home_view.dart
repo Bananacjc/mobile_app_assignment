@@ -728,6 +728,7 @@ class _HomeViewState extends State<HomeView> {
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                               style: const TextStyle(
+                                                color: Colors.black,
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.bold,
                                               ),
