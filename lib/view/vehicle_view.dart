@@ -1,81 +1,23 @@
-// lib/view/vehicle_view.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../core/theme/app_colors.dart';
-import '../model/global_user.dart';
 import '../model/vehicle.dart';
+import '../model/global_user.dart';
 import '../services/vehicle_service.dart';
+import '../provider/navigation_provider.dart';
 
-class VehicleView extends StatefulWidget {
-  const VehicleView({super.key});
+class VehicleView extends StatelessWidget {
+  VehicleView({super.key});
 
-  @override
-  State<VehicleView> createState() => _VehicleViewState();
-}
-
-class _VehicleViewState extends State<VehicleView> {
   final _service = VehicleService();
 
-  // --- Brand list (extend as you like)
-  final List<String> _brands = const [
-    'Perodua',
-    'Proton',
-    'Toyota',
-    'Honda',
-    'Nissan',
-    'Mazda',
-    'Mitsubishi',
-    'BMW',
-    'Mercedes-Benz',
-    'Audi',
-    'Volkswagen',
-    'Hyundai',
-    'Kia',
-    'Tesla',
-  ];
-
-  // --- Color palette (label -> Color)
-  final Map<String, Color> _colorOptions = const {
-    'Black': Color(0xFF000000),
-    'White': Color(0xFFFFFFFF),
-    'Silver': Color(0xFFC0C0C0),
-    'Gray': Color(0xFF6E6E6E),
-    'Red': Color(0xFFCF2E2E),
-    'Wine': Color(0xFF7B1E1E),
-    'Orange': Color(0xFFFF7A00),
-    'Yellow': Color(0xFFFFD166),
-    'Green': Color(0xFF218662), // match your theme
-    'Mint': Color(0xFF29A87A),
-    'Teal': Color(0xFF2CB1A5),
-    'Blue': Color(0xFF1E90FF),
-    'Navy': Color(0xFF1B2A49),
-    'Purple': Color(0xFF6A54E4),
-    'Magenta': Color(0xFFD81B60),
-    'Brown': Color(0xFF6D4C41),
-    'Beige': Color(0xFFF5E9D2),
-    'Gold': Color(0xFFFFC107),
-  };
-
-  // Helpers to convert between Color <-> hex string (#RRGGBB)
-  static String _colorToHex(Color c) {
-    final rgb = c.value.toRadixString(16).padLeft(8, '0').substring(2); // drop alpha
-    return '#${rgb.toUpperCase()}';
-  }
-
-  static Color _hexToColor(String? hex) {
-    if (hex == null || hex.isEmpty) return AppColor.slateGray;
-    var cleaned = hex.replaceAll('#', '').replaceAll('0x', '');
-    if (cleaned.length == 6) cleaned = 'FF$cleaned';
-    final val = int.tryParse(cleaned, radix: 16) ?? 0xFF6E6E6E;
-    return Color(val);
-    }
-
-  // ---------- UI ----------
   @override
   Widget build(BuildContext context) {
-    final user = GlobalUser.user;
+    final uid = GlobalUser.user?.uid ?? '';
+    final nav = Provider.of<NavigationProvider>(context, listen: false);
+
     return Scaffold(
       backgroundColor: AppColor.softWhite,
       appBar: PreferredSize(
@@ -87,12 +29,12 @@ class _VehicleViewState extends State<VehicleView> {
           leadingWidth: 56,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: AppColor.softWhite),
-            onPressed: () => Navigator.of(context).maybePop(),
+            onPressed: () => nav.goBack(),
           ),
           title: const Padding(
             padding: EdgeInsets.only(left: 10),
             child: Text(
-              'Vehicle',
+              "My Vehicles",
               style: TextStyle(
                 color: AppColor.softWhite,
                 fontWeight: FontWeight.bold,
@@ -102,367 +44,290 @@ class _VehicleViewState extends State<VehicleView> {
           ),
         ),
       ),
-      body: user == null
-          ? const Center(
-              child: Text(
-                'Please log in to manage vehicles.',
-                style: TextStyle(color: AppColor.darkCharcoal),
-              ),
-            )
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: FloatingActionButton(
+          backgroundColor: AppColor.primaryGreen,
+          onPressed: () => _openVehicleForm(context),
+          child: const Icon(Icons.add, size: 28, color: AppColor.softWhite),
+        ),
+      ),
+      body: uid.isEmpty
+          ? const Center(child: Text('No logged-in user'))
           : StreamBuilder<List<Vehicle>>(
-              stream: _service.streamUserVehicles(user.uid),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+              stream: _service.streamUserVehicles(uid),
+              builder: (context, snap) {
+                if (snap.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                final vehicles = snapshot.data ?? [];
-                if (vehicles.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            'No vehicles yet',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: AppColor.darkCharcoal,
-                              fontSize: 18,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Add your first vehicle to make booking easier.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: AppColor.slateGray.withOpacity(.9),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
+                if (snap.hasError) {
+                  return Center(child: Text('Error: ${snap.error}'));
                 }
-
+                final vehicles = snap.data ?? [];
+                if (vehicles.isEmpty) {
+                  return _EmptyVehicleState(onAdd: () => _openVehicleForm(context));
+                }
                 return ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                   itemCount: vehicles.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (_, i) {
+                  itemBuilder: (context, i) {
                     final v = vehicles[i];
-                    return _vehicleCard(v);
+                    return _VehicleCard(
+                      v: v,
+                      onEdit: () => _openVehicleForm(context, vehicle: v),
+                      onDelete: () async {
+                        final ok = await _confirm(context, 'Delete this vehicle?');
+                        if (ok != true) return;
+                        await _service.deleteVehicle(v.plateNo); // using plateNo as key
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Vehicle deleted')),
+                          );
+                        }
+                      },
+                    );
                   },
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColor.primaryGreen,
-        onPressed: () => _openVehicleForm(),
-        child: const Icon(Icons.add, color: AppColor.softWhite),
-      ),
     );
   }
 
-  // ---------- Cards ----------
-  Widget _vehicleCard(Vehicle v) {
-    final color = _hexToColor(v.color);
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AppColor.darkCharcoal.withOpacity(0.12),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        leading: Container(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(
-            color: AppColor.primaryGreen.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const Icon(Icons.directions_car, color: AppColor.primaryGreen),
-        ),
-        title: Text(
-          v.brand != null && v.brand!.isNotEmpty
-              ? '${v.brand} ${v.model ?? ''}'.trim()
-              : (v.model ?? 'Vehicle'),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: AppColor.darkCharcoal,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        subtitle: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColor.darkCharcoal,
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: Colors.black),
-              ),
-              child: Text(
-                v.plateNo,
-                style: const TextStyle(
-                  color: AppColor.softWhite,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            if (v.color != null)
-              Row(
-                children: [
-                  Container(
-                    width: 14,
-                    height: 14,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColor.darkCharcoal.withOpacity(0.2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    v.color!, // shows hex
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColor.slateGray.withOpacity(.9),
-                    ),
-                  ),
-                ],
-              ),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              tooltip: 'Edit',
-              icon: const Icon(Icons.edit_outlined, color: AppColor.darkCharcoal),
-              onPressed: () => _openVehicleForm(existing: v),
-            ),
-            IconButton(
-              tooltip: 'Delete',
-              icon: const Icon(Icons.delete_outline, color: AppColor.wineRed),
-              onPressed: () => _deleteVehicle(v),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ---------- Form ----------
-  Future<void> _openVehicleForm({Vehicle? existing}) async {
-    final user = GlobalUser.user;
-    if (user == null) return;
+  // ---------- MODAL FORM ----------
+  void _openVehicleForm(BuildContext context, {Vehicle? vehicle}) {
+    final uid = GlobalUser.user?.uid;
+    if (uid == null || uid.isEmpty) {
+      _toast(context, 'No logged-in user');
+      return;
+    }
 
     final formKey = GlobalKey<FormState>();
+    bool saving = false;
 
-    String? vehicleId = existing?.vehicleId;
-    String plate = existing?.plateNo ?? '';
-    String brand = existing?.brand ?? _brands.first;
-    String model = existing?.model ?? '';
-    // store hex, but keep Color for preview
-    String? colorHex = existing?.color;
-    Color? selectedColor = _hexToColor(colorHex ?? '#6E6E6E');
-
-    await showModalBottomSheet(
+    showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (ctx) {
-        return DraggableScrollableSheet(
-          minChildSize: 0.35,
-          initialChildSize: 0.75,
-          maxChildSize: 0.92,
-          builder: (_, controller) {
-            return Container(
-              decoration: BoxDecoration(
-                color: AppColor.softWhite,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColor.darkCharcoal.withOpacity(.2),
-                    blurRadius: 12,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
+        String plateNo = vehicle?.plateNo ?? '';
+        String? brand = vehicle?.brand;
+        String? model = vehicle?.model;
+        String? selectedColorHex = vehicle?.color; // hex
+
+        final plateCtrl = TextEditingController(text: plateNo);
+        final modelCtrl = TextEditingController(text: model ?? '');
+
+        // simple plate format: 3–10 chars, A–Z 0–9 space hyphen
+        final plateRegex = RegExp(r'^[A-Z0-9 -]{3,10}$');
+
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            Future<void> save() async {
+              if (!(formKey.currentState?.validate() ?? false)) return;
+
+              final newPlate = plateCtrl.text.trim().toUpperCase();
+              final modelText = modelCtrl.text.trim().isEmpty ? null : modelCtrl.text.trim();
+
+              final payload = Vehicle(
+                plateNo: newPlate,
+                userId: uid,
+                brand: (brand != null && brand!.trim().isNotEmpty) ? brand : null,
+                model: modelText,
+                color: (selectedColorHex != null && selectedColorHex!.trim().isNotEmpty)
+                    ? selectedColorHex
+                    : null,
+              );
+
+              try {
+                setModalState(() => saving = true);
+
+                if (vehicle == null) {
+                  // Add (upsert). If you want to block duplicates, add an exists check here.
+                  await VehicleService().addOrUpdateVehicle(payload);
+                  if (context.mounted) _toast(context, 'Vehicle saved');
+                } else {
+                  final oldPlate = vehicle.plateNo.toUpperCase();
+                  if (oldPlate != newPlate) {
+                    await VehicleService().renamePlate(oldPlateNo: oldPlate, newVehicle: payload);
+                  } else {
+                    await VehicleService().addOrUpdateVehicle(payload);
+                  }
+                  if (context.mounted) _toast(context, 'Vehicle updated');
+                }
+
+                if (Navigator.canPop(ctx)) Navigator.pop(ctx);
+              } catch (e) {
+                if (context.mounted) {
+                  _toast(context, 'Save failed: $e');
+                }
+              } finally {
+                if (ctx.mounted) setModalState(() => saving = false);
+              }
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
               ),
-              child: SafeArea(
-                top: false,
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    left: 16,
-                    right: 16,
-                    bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-                    top: 12,
-                  ),
-                  child: Form(
-                    key: formKey,
-                    child: ListView(
-                      controller: controller,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              existing == null ? 'Add Vehicle' : 'Edit Vehicle',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                                color: AppColor.darkCharcoal,
-                              ),
-                            ),
-                            const Spacer(),
-                            IconButton(
-                              onPressed: () => Navigator.pop(context),
-                              icon: const Icon(Icons.close, color: AppColor.darkCharcoal),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Plate No
-                        TextFormField(
-                          initialValue: plate,
-                          decoration: _input('Plate No'),
-                          textCapitalization: TextCapitalization.characters,
-                          validator: (v) =>
-                              (v == null || v.trim().isEmpty) ? 'Plate number required' : null,
-                          onChanged: (v) => plate = v.trim().toUpperCase(),
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Brand (dropdown)
-                        DropdownButtonFormField<String>(
-                          value: brand,
-                          decoration: _input('Brand'),
-                          items: _brands
-                              .map((b) => DropdownMenuItem(value: b, child: Text(b)))
-                              .toList(),
-                          onChanged: (v) => brand = v ?? brand,
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Model (free text so far)
-                        TextFormField(
-                          initialValue: model,
-                          decoration: _input('Model'),
-                          onChanged: (v) => model = v.trim(),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Color picker row
-                        Row(
-                          children: [
-                            const Text(
-                              'Color',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: AppColor.darkCharcoal,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Container(
-                              width: 22,
-                              height: 22,
-                              decoration: BoxDecoration(
-                                color: selectedColor,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: AppColor.darkCharcoal.withOpacity(0.25),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              colorHex ?? '--',
-                              style: const TextStyle(color: AppColor.darkCharcoal),
-                            ),
-                            const Spacer(),
-                            OutlinedButton.icon(
-                              onPressed: () async {
-                                final chosen = await showModalBottomSheet<Color>(
-                                  context: context,
-                                  backgroundColor: Colors.transparent,
-                                  builder: (_) => _ColorPaletteSheet(
-                                    options: _colorOptions,
-                                    initial: selectedColor,
-                                  ),
-                                );
-                                if (chosen != null) {
-                                  setState(() {
-                                    selectedColor = chosen;
-                                    colorHex = _colorToHex(chosen);
-                                  });
-                                }
-                              },
-                              icon: const Icon(Icons.palette_outlined, size: 18),
-                              label: const Text('Pick color'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColor.darkCharcoal,
-                                side: const BorderSide(color: AppColor.slateGray),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Save button
-                        SizedBox(
-                          height: 50,
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              if (!formKey.currentState!.validate()) return;
-
-                              final v = Vehicle(
-                                vehicleId: vehicleId ?? '',
-                                userId: user.uid,
-                                plateNo: plate,
-                                brand: brand,
-                                model: model.isEmpty ? null : model,
-                                color: colorHex, // store hex string
-                              );
-
-                              final ok = await _saveVehicle(v, isEdit: existing != null);
-                              if (!mounted) return;
-
-                              if (ok) Navigator.pop(context);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColor.primaryGreen,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: const Text(
-                              'Save',
-                              style: TextStyle(
-                                color: AppColor.softWhite,
-                                fontWeight: FontWeight.w600,
-                              ),
+              child: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            vehicle == null ? 'Add Vehicle' : 'Edit Vehicle',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: AppColor.darkCharcoal,
                             ),
                           ),
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () {
+                              if (!saving && Navigator.canPop(ctx)) Navigator.pop(ctx);
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Live Preview
+                      _VehiclePreview(
+                        brand: brand,
+                        plate: plateCtrl.text,
+                        colorHex: selectedColorHex,
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Plate No (required + format)
+                      TextFormField(
+                        controller: plateCtrl,
+                        textCapitalization: TextCapitalization.characters,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 -]')),
+                        ],
+                        decoration: _flatInput('Plate No'),
+                        onChanged: (_) => setModalState(() {}), // update preview
+                        validator: (val) {
+                          final v = (val ?? '').trim().toUpperCase();
+                          if (v.isEmpty) return 'Plate number is required';
+                          if (v.length < 3) return 'Too short';
+                          if (v.length > 10) return 'Too long';
+                          if (!plateRegex.hasMatch(v)) {
+                            return 'Only A–Z, 0–9, space, -';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Brand dropdown (optional)
+                      DropdownButtonFormField<String>(
+                        value: _brandItems.any((i) => i.value == brand) ? brand : null,
+                        items: _brandItems,
+                        hint: const Text('Brand', style: TextStyle(color: AppColor.slateGray)),
+                        decoration: _flatInput(null),
+                        onChanged: (v) => setModalState(() => brand = v),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Model (optional)
+                      TextFormField(
+                        controller: modelCtrl,
+                        decoration: _flatInput('Model'),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Color palette (optional)
+                      const Text(
+                        'Color',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColor.darkCharcoal,
                         ),
-                        const SizedBox(height: 8),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: kColorHexes.map((hex) {
+                          final isSel = hex == selectedColorHex;
+                          return GestureDetector(
+                            onTap: () => setModalState(() => selectedColorHex = hex),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: _fromHex(hex),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: isSel ? AppColor.darkCharcoal : Colors.transparent,
+                                      width: 2,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.08),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (isSel)
+                                  const Icon(Icons.check, size: 18, color: Colors.white),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Save
+                      SizedBox(
+                        height: 48,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColor.primaryGreen,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: saving ? null : save,
+                          child: saving
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : const Text(
+                                  'Save Vehicle',
+                                  style: TextStyle(
+                                    color: AppColor.softWhite,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -473,188 +338,268 @@ class _VehicleViewState extends State<VehicleView> {
     );
   }
 
-  // ---------- Actions ----------
-  Future<bool> _saveVehicle(Vehicle v, {required bool isEdit}) async {
-    try {
-      if (isEdit) {
-        await _service.updateVehicle(v);
-      } else {
-        await _service.addVehicle(v); // service should set the new vehicleId
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(isEdit ? 'Vehicle updated' : 'Vehicle added')),
-        );
-      }
-      return true;
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e')),
-        );
-      }
-      return false;
-    }
+  // ---------- helpers ----------
+  static InputDecoration _flatInput([String? hint]) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(color: AppColor.slateGray),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColor.slateGray, width: 1),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColor.primaryGreen, width: 2),
+      ),
+    );
   }
 
-  Future<void> _deleteVehicle(Vehicle v) async {
-    final confirm = await showDialog<bool>(
+  static Future<bool?> _confirm(BuildContext context, String msg) {
+    return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete vehicle?'),
-        content: Text('Remove ${v.plateNo}? This cannot be undone.'),
+        title: const Text('Confirm'),
+        content: Text(msg),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('OK')),
         ],
       ),
     );
-    if (confirm != true) return;
-
-    try {
-      await _service.deleteVehicle(v.vehicleId);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vehicle deleted')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Delete failed: $e')),
-      );
-    }
   }
 
-  // ---------- Styling ----------
-  InputDecoration _input(String hint) => InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: AppColor.slateGray),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColor.slateGray, width: 1),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColor.primaryGreen, width: 2),
-        ),
-      );
+  static void _toast(BuildContext context, String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
 }
 
-// --------------- Bottom Sheet Palette ----------------
-class _ColorPaletteSheet extends StatelessWidget {
-  final Map<String, Color> options;
-  final Color? initial;
-  const _ColorPaletteSheet({required this.options, this.initial});
+// ---------- EMPTY STATE WIDGET ----------
+class _EmptyVehicleState extends StatelessWidget {
+  const _EmptyVehicleState({required this.onAdd});
+  final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
-    final entries = options.entries.toList();
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColor.softWhite,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColor.darkCharcoal.withOpacity(0.15),
-            blurRadius: 12,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  const Text(
-                    'Choose a color',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: AppColor.darkCharcoal,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, color: AppColor.darkCharcoal),
-                  ),
-                ],
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.directions_car_filled, size: 72, color: AppColor.slateGray),
+            const SizedBox(height: 12),
+            const Text(
+              'No vehicles yet',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColor.darkCharcoal),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Add your first vehicle to make booking and switching easier.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColor.slateGray),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColor.primaryGreen,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              const SizedBox(height: 8),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const BouncingScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 6,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: .85,
-                ),
-                itemCount: entries.length,
-                itemBuilder: (_, i) {
-                  final label = entries[i].key;
-                  final color = entries[i].value;
-                  final selected = initial?.value == color.value;
-
-                  return InkWell(
-                    onTap: () => Navigator.pop(context, color),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: selected
-                                      ? AppColor.primaryGreen
-                                      : AppColor.darkCharcoal.withOpacity(0.2),
-                                  width: selected ? 3 : 1,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColor.darkCharcoal.withOpacity(.15),
-                                    blurRadius: 6,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (selected)
-                              const Icon(Icons.check, size: 18, color: Colors.white),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 11),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-            ],
-          ),
+              onPressed: onAdd,
+              icon: const Icon(Icons.add),
+              label: const Text('Add Vehicle'),
+            ),
+          ],
         ),
       ),
     );
+  }
+}
+
+// ---------- VEHICLE LIST CARD ----------
+class _VehicleCard extends StatelessWidget {
+  const _VehicleCard({
+    required this.v,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final Vehicle v;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final isWhite   = _isWhite(v.color);
+    final borderCol = _fromHex(v.color);
+    final tileBg    = isWhite ? Colors.black : Colors.white;
+    final iconColor = isWhite ? Colors.white : borderCol;
+
+    final brandText = (v.brand == null || v.brand!.isEmpty) ? 'Brand' : v.brand!;
+    final modelText = (v.model == null || v.model!.isEmpty) ? '' : ' • ${v.model}';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: AppColor.darkCharcoal.withOpacity(0.12), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            width: 50, height: 50,
+            decoration: BoxDecoration(
+              color: tileBg,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: isWhite ? Colors.black : borderCol, width: 2),
+            ),
+            child: Icon(Icons.directions_car, color: iconColor, size: 28),
+          ),
+          const SizedBox(width: 12),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('$brandText$modelText', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppColor.darkCharcoal,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Colors.black),
+                  ),
+                  child: Text(
+                    v.plateNo.toUpperCase(),
+                    style: const TextStyle(color: AppColor.softWhite, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 8),
+          IconButton(tooltip: 'Edit',   onPressed: onEdit,   icon: const Icon(Icons.edit, color: AppColor.darkCharcoal)),
+          IconButton(tooltip: 'Delete', onPressed: onDelete, icon: const Icon(Icons.delete_outline, color: AppColor.wineRed)),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------- LIVE PREVIEW ----------
+class _VehiclePreview extends StatelessWidget {
+  const _VehiclePreview({
+    required this.brand,
+    required this.plate,
+    required this.colorHex,
+  });
+
+  final String? brand;
+  final String plate;
+  final String? colorHex;
+
+  @override
+  Widget build(BuildContext context) {
+    final isWhite   = _isWhite(colorHex);
+    final borderCol = _fromHex(colorHex);
+    final tileBg    = isWhite ? Colors.black : Colors.white;
+    final iconColor = isWhite ? Colors.white : borderCol;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [BoxShadow(color: AppColor.darkCharcoal.withOpacity(0.15), blurRadius: 8, offset: const Offset(0, 2))],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 50, height: 50,
+            decoration: BoxDecoration(
+              color: tileBg,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: isWhite ? Colors.black : borderCol, width: 2),
+            ),
+            child: Icon(Icons.directions_car, size: 28, color: iconColor),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text((brand == null || brand!.isEmpty) ? 'Brand' : brand!, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                decoration: BoxDecoration(
+                  color: AppColor.darkCharcoal,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.black),
+                ),
+                child: Text(
+                  (plate.isEmpty ? 'ABC 1234' : plate).toUpperCase(),
+                  style: const TextStyle(color: AppColor.softWhite, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------- constants & utils ----------
+const List<DropdownMenuItem<String>> _brandItems = [
+  DropdownMenuItem(value: 'Mercedes-Benz', child: Text('Mercedes-Benz')),
+  DropdownMenuItem(value: 'Toyota',        child: Text('Toyota')),
+  DropdownMenuItem(value: 'Honda',         child: Text('Honda')),
+  DropdownMenuItem(value: 'Proton',        child: Text('Proton')),
+  DropdownMenuItem(value: 'Perodua',       child: Text('Perodua')),
+  DropdownMenuItem(value: 'BMW',           child: Text('BMW')),
+  DropdownMenuItem(value: 'Audi',          child: Text('Audi')),
+  DropdownMenuItem(value: 'Mazda',         child: Text('Mazda')),
+  DropdownMenuItem(value: 'Nissan',        child: Text('Nissan')),
+  DropdownMenuItem(value: 'Hyundai',       child: Text('Hyundai')),
+];
+
+/// Swatches (hex)
+const List<String> kColorHexes = [
+  '#000000', // black
+  '#FFFFFF', // white
+  '#1E90FF', // dodger blue
+  '#1976D2', // blue 700
+  '#3F51B5', // indigo
+  '#00BCD4', // cyan
+  '#4CAF50', // green
+  '#8BC34A', // light green
+  '#FFC107', // amber
+  '#FF9800', // orange
+  '#FF7043', // deep orange 300
+  '#FF4D4D', // soft red
+  '#9C27B0', // purple
+  '#795548', // brown
+  '#607D8B', // blue grey
+  '#A4A4A4', // silver
+];
+
+bool _isWhite(String? hex) => (hex ?? '').toUpperCase() == '#FFFFFF';
+
+Color _fromHex(String? hex) {
+  if (hex == null || hex.isEmpty) return const Color(0xFFCCCCCC);
+  final clean = hex.replaceAll('#', '');
+  final withAlpha = clean.length == 6 ? 'FF$clean' : clean;
+  try {
+    return Color(int.parse(withAlpha, radix: 16));
+  } catch (_) {
+    return const Color(0xFFCCCCCC);
   }
 }

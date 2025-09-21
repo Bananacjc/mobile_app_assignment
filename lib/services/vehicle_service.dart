@@ -1,56 +1,85 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import '../model/vehicle.dart';
 
 class VehicleService {
-  // Typed collection with converters
-  final CollectionReference<Vehicle> _vehicles =
-      FirebaseFirestore.instance
-          .collection('vehicles')
-          .withConverter<Vehicle>(
-            fromFirestore: Vehicle.fromFirestore,
-            toFirestore: (Vehicle v, _) => v.toFirestore(),
-          );
+  final CollectionReference<Vehicle> _col = FirebaseFirestore.instance
+      .collection('vehicles')
+      .withConverter<Vehicle>(
+        fromFirestore: Vehicle.fromFirestore,
+        toFirestore: (v, _) => v.toFirestore(),
+      );
 
-  /// Live stream of this user's vehicles (updates in real time)
   Stream<List<Vehicle>> streamUserVehicles(String userId) {
-    return _vehicles
-        .where('userId', isEqualTo: userId)
-        .orderBy('plateNo')
-        .snapshots()
-        .map((snap) => snap.docs.map((d) => d.data()).toList());
+    return _col.where('userId', isEqualTo: userId).snapshots().map((s) {
+      final list = s.docs.map((d) => d.data()).toList();
+      list.sort((a, b) => a.plateNo.compareTo(b.plateNo));
+      return list;
+    });
   }
 
-  /// Add a vehicle and assign a generated vehicleId
-  Future<void> addVehicle(Vehicle v) async {
-    // Pre-create a doc so we can set vehicleId == doc.id
-    final docRef = _vehicles.doc();
-    final withId = Vehicle(
-      vehicleId: docRef.id,
-      userId: v.userId,
-      plateNo: v.plateNo,
-      brand: v.brand,
-      model: v.model,
-      color: v.color, // hex string like "#1E90FF"
-    );
-    await docRef.set(withId);
-  }
-
-  /// Update (merge) an existing vehicle by its vehicleId
-  Future<void> updateVehicle(Vehicle v) async {
-    if (v.vehicleId.isEmpty) {
-      throw ArgumentError('vehicleId is required for updateVehicle');
+  /// Upsert by plateNo (document id). Returns true on success.
+  Future<bool> addOrUpdateVehicle(Vehicle v) async {
+    try {
+      final plate = v.plateNo.trim().toUpperCase();
+      if (plate.isEmpty) {
+        throw 'Plate number is empty';
+      }
+      await _col.doc(plate).set(
+            Vehicle(
+              plateNo: plate,
+              userId: v.userId,
+              brand: v.brand,
+              model: v.model,
+              color: v.color,
+            ),
+            SetOptions(merge: true),
+          );
+      return true;
+    } on FirebaseException catch (e) {
+      debugPrint('addOrUpdateVehicle failed: ${e.code} ${e.message}');
+      rethrow;
+    } catch (e) {
+      debugPrint('addOrUpdateVehicle failed: $e');
+      rethrow;
     }
-    await _vehicles.doc(v.vehicleId).set(v, SetOptions(merge: true));
   }
 
-  /// Delete by vehicleId
-  Future<void> deleteVehicle(String vehicleId) async {
-    await _vehicles.doc(vehicleId).delete();
+  Future<bool> deleteVehicle(String plateNo) async {
+    try {
+      await _col.doc(plateNo.toUpperCase()).delete();
+      return true;
+    } catch (e) {
+      debugPrint('deleteVehicle failed: $e');
+      rethrow;
+    }
   }
 
-  /// (Optional) one-time fetch (not streamed)
-  Future<List<Vehicle>> getUserVehiclesOnce(String userId) async {
-    final snap = await _vehicles.where('userId', isEqualTo: userId).get();
-    return snap.docs.map((d) => d.data()).toList();
+  Future<bool> renamePlate({
+    required String oldPlateNo,
+    required Vehicle newVehicle,
+  }) async {
+    try {
+      final batch = FirebaseFirestore.instance.batch();
+      final oldRef = _col.doc(oldPlateNo.toUpperCase());
+      final newRef = _col.doc(newVehicle.plateNo.toUpperCase());
+
+      batch.set(
+        newRef,
+        Vehicle(
+          plateNo: newVehicle.plateNo.toUpperCase(),
+          userId: newVehicle.userId,
+          brand: newVehicle.brand,
+          model: newVehicle.model,
+          color: newVehicle.color,
+        ),
+      );
+      batch.delete(oldRef);
+      await batch.commit();
+      return true;
+    } catch (e) {
+      debugPrint('renamePlate failed: $e');
+      rethrow;
+    }
   }
 }
