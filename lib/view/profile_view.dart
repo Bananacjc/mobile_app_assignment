@@ -1,24 +1,53 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import '../services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+
 import '../model/global_user.dart';
+import '../services/auth_service.dart';
 import '../view/login_view.dart';
 import '../core/theme/app_colors.dart';
-import '../widgets/navbar_widget.dart';
+import '../view/vehicle_view.dart';
+import '../provider/navigation_provider.dart';
 
-class ProfileView extends StatelessWidget {
+class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
+  State<ProfileView> createState() => _ProfileViewState();
+}
 
+class _ProfileViewState extends State<ProfileView> {
+  String _name = "Loading...";
+  String _email = "Loading...";
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    setState(() {
+      _name = "${GlobalUser.user?.displayName ?? 'Guest'}";
+      _email = "${GlobalUser.user?.email ?? 'No Email'}";
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final navigationProvider = Provider.of<NavigationProvider>(
+      context,
+      listen: false,
+    );
     return Scaffold(
       backgroundColor: AppColor.softWhite,
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(80),
+        preferredSize: const Size.fromHeight(80),
         child: AppBar(
-          title: Padding(
+          backgroundColor: AppColor.primaryGreen,
+          toolbarHeight: 80,
+          titleSpacing: 0,
+          title: const Padding(
             padding: EdgeInsets.only(left: 10, top: 20),
             child: Text(
               "User Profile",
@@ -29,13 +58,12 @@ class ProfileView extends StatelessWidget {
               ),
             ),
           ),
-          backgroundColor: AppColor.primaryGreen,
         ),
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 🔹 Main content container
+            // Card
             Container(
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.symmetric(vertical: 20),
@@ -44,24 +72,21 @@ class ProfileView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColor.darkCharcoal.withOpacity(
-                      0.2,
-                    ), // shadow color
-                    blurRadius: 12, // softness
-                    spreadRadius: 2, // how wide the shadow spreads
-                    offset: const Offset(0, 6), // position of shadow (x, y)
+                    color: AppColor.darkCharcoal.withOpacity(0.2),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Profile Header Section
-                  Container(
+                  // Header
+                  Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Row(
                       children: [
-                        // Profile Image
                         Container(
                           width: 60,
                           height: 60,
@@ -69,30 +94,20 @@ class ProfileView extends StatelessWidget {
                             borderRadius: BorderRadius.circular(30),
                             color: Colors.grey[300],
                           ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(30),
-                            child: Image.asset(
-                              'assets/images/profile_placeholder.png',
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Icon(
-                                  Icons.person,
-                                  size: 30,
-                                  color: Colors.grey,
-                                );
-                              },
-                            ),
+                          child: const Icon(
+                            Icons.person,
+                            size: 30,
+                            color: Colors.grey,
                           ),
                         ),
                         const SizedBox(width: 15),
-                        // Profile Info
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Qiin Shi Huang',
-                                style: TextStyle(
+                              Text(
+                                _name,
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
                                   color: AppColor.darkCharcoal,
@@ -100,8 +115,8 @@ class ProfileView extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'qiinshihuang@gmail.com',
-                                style: TextStyle(
+                                _email,
+                                style: const TextStyle(
                                   fontSize: 14,
                                   color: AppColor.darkCharcoal,
                                 ),
@@ -115,18 +130,26 @@ class ProfileView extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // Menu Items
                   _buildMenuItem('My Account', Icons.chevron_right),
                   _buildDivider(),
-                  _buildMenuItem('Vehicle', Icons.chevron_right),
+
+                  // VEHICLE —> open full-page VehicleView
+                  _buildMenuItem(
+                    'Vehicle',
+                    Icons.chevron_right,
+                    onTap: () {
+                      navigationProvider.showFullPageContent(VehicleView());
+                    },
+                  ),
                   _buildDivider(),
+
                   _buildMenuItem('Payment', Icons.chevron_right),
                   _buildDivider(),
                   _buildMenuItem('FAQ', Icons.chevron_right),
                   _buildDivider(),
                   _buildMenuItem('T&C', Icons.chevron_right),
 
-                  // 🚀 Logout button directly below T&C
+                  // Logout button
                   Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: SizedBox(
@@ -157,25 +180,14 @@ class ProfileView extends StatelessWidget {
                           if (confirm != true) return;
 
                           try {
-                            await AuthService()
-                                .signOut(); // signs out Firebase + Google
-
+                            await AuthService().signOut();
                             if (!context.mounted) return;
-
-                            // If you are NOT using an AuthGate:
                             Navigator.of(context).pushAndRemoveUntil(
                               MaterialPageRoute(
                                 builder: (_) => const LoginView(),
                               ),
                               (route) => false,
                             );
-
-                            // If you ARE using an AuthGate based on authStateChanges,
-                            // you can skip navigation; the stream will show LoginView automatically.
-                            // Optionally show feedback:
-                            // ScaffoldMessenger.of(context).showSnackBar(
-                            //   const SnackBar(content: Text('Logged out')),
-                            // );
                           } catch (e) {
                             if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -204,9 +216,9 @@ class ProfileView extends StatelessWidget {
                 ],
               ),
             ),
-            // 🔹 Footer (outside container)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 20.0),
+            // Footer
+            const Padding(
+              padding: EdgeInsets.only(bottom: 20.0),
               child: Column(
                 children: [
                   Text(
@@ -216,7 +228,7 @@ class ProfileView extends StatelessWidget {
                       color: AppColor.darkCharcoal,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     '©2025 Greenstein. All Rights Reserved.',
                     style: TextStyle(
@@ -233,22 +245,25 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuItem(String title, IconData trailingIcon) {
+  // let this take an optional onTap
+  Widget _buildMenuItem(
+    String title,
+    IconData trailingIcon, {
+    VoidCallback? onTap,
+  }) {
     return ListTile(
       title: Text(
         title,
         style: const TextStyle(fontSize: 16, color: AppColor.darkCharcoal),
       ),
       trailing: Icon(trailingIcon, color: AppColor.darkCharcoal, size: 20),
-      onTap: () {
-        // Handle menu item tap
-      },
+      onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
     );
   }
 
   Widget _buildDivider() {
-    return Divider(
+    return const Divider(
       height: 1,
       thickness: 1,
       color: AppColor.softWhite,

@@ -6,15 +6,38 @@ class VehicleService {
       .collection('vehicles')
       .withConverter(fromFirestore: Vehicle.fromFirestore, toFirestore: (Vehicle vehicle, _) => vehicle.toFirestore());
 
-  Future<DocumentReference<Vehicle>?> addVehicle(Vehicle vehicle) async{
-    try{
-      print("Vehicle successfully added.");
-      final doc = _vehiclesCollection.doc(vehicle.plateNo); // set plateNo as doc id
-      await doc.set(vehicle);
-      return doc;
+  Stream<List<Vehicle>> streamUserVehicles(String userId) {
+    return _vehiclesCollection.where('userId', isEqualTo: userId).snapshots().map((s) {
+      final list = s.docs.map((d) => d.data()).toList();
+      list.sort((a, b) => a.plateNo.compareTo(b.plateNo));
+      return list;
+    });
+  }
+
+  /// Upsert by plateNo (document id). Returns true on success.
+  Future<bool> addOrUpdateVehicle(Vehicle v) async {
+    try {
+      final plate = v.plateNo.trim().toUpperCase();
+      if (plate.isEmpty) {
+        throw 'Plate number is empty';
+      }
+      await _vehiclesCollection.doc(plate).set(
+            Vehicle(
+              plateNo: plate,
+              userId: v.userId,
+              brand: v.brand,
+              model: v.model,
+              color: v.color,
+            ),
+            SetOptions(merge: true),
+          );
+      return true;
+    } on FirebaseException catch (e) {
+      print('addOrUpdateVehicle failed: ${e.code} ${e.message}');
+      rethrow;
     } catch (e) {
       print("Error adding vehicle: $e");
-      return null;
+      rethrow;
     }
   }
 
@@ -62,23 +85,37 @@ class VehicleService {
     }
   }
 
-  Future<bool> updateVehicle(Vehicle vehicle) async {
-    try{
-      final querySnapshot = await _vehiclesCollection.doc(vehicle.plateNo).get();
-      if (querySnapshot.exists){
-        await _vehiclesCollection.doc(vehicle.plateNo).set(vehicle,SetOptions(merge: true));
-        return true;
-      }
-      return false;
-    } catch(e) {
-      print("Error updating vehicle $e");
+  Future<bool> deleteVehicle(String plateNo) async {
+    try {
+      await _vehiclesCollection.doc(plateNo.toUpperCase()).delete();
+      return true;
+    } catch (e) {
+      print('deleteVehicle failed: $e');
       rethrow;
     }
   }
 
-  Future<bool> deleteVehicle(String plateNo) async {
-    try{
-      await _vehiclesCollection.doc(plateNo).delete();
+  Future<bool> renamePlate({
+    required String oldPlateNo,
+    required Vehicle newVehicle,
+  }) async {
+    try {
+      final batch = FirebaseFirestore.instance.batch();
+      final oldRef = _vehiclesCollection.doc(oldPlateNo.toUpperCase());
+      final newRef = _vehiclesCollection.doc(newVehicle.plateNo.toUpperCase());
+
+      batch.set(
+        newRef,
+        Vehicle(
+          plateNo: newVehicle.plateNo.toUpperCase(),
+          userId: newVehicle.userId,
+          brand: newVehicle.brand,
+          model: newVehicle.model,
+          color: newVehicle.color,
+        ),
+      );
+      batch.delete(oldRef);
+      await batch.commit();
       return true;
     } catch(e) {
       print("Error deleting vehicle $e");

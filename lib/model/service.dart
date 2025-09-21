@@ -1,9 +1,10 @@
+// model/service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Service {
   final String serviceId;           // Firestore doc id
   final String userId;              // owner uid
-  final String plateNo;              // owner uid
+  final String plateNo;             // vehicle plate
   final String? title;
   final String? note;
   final String? status;
@@ -23,13 +24,11 @@ class Service {
     this.appointmentDate,
   });
 
-  // Firestore -> Service
   factory Service.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
     SnapshotOptions? options,
   ) {
     final data = snapshot.data() ?? const <String, dynamic>{};
-
     return Service(
       serviceId: (data['serviceId'] as String?) ?? snapshot.id,
       userId: (data['userId'] as String?) ?? '',
@@ -43,20 +42,19 @@ class Service {
     );
   }
 
-  // Service -> Firestore
   Map<String, dynamic> toFirestore() {
-    final map = <String, dynamic>{
+    // Include fee & duration even when null so they are stored as null.
+    return <String, dynamic>{
       'serviceId': serviceId,
       'userId': userId,
-      'plateNo': userId,
+      'plateNo': plateNo,                // <-- fixed
+      'title': title,
+      'note': note,
+      'status': status,
+      'fee': fee,                        // may be null -> saved as null
+      'duration': duration,              // may be null -> saved as null
+      'appointmentDate': appointmentDate,
     };
-    if (title != null) map['title'] = title;
-    if (note != null) map['note'] = note;
-    if (status != null) map['status'] = status;
-    if (fee != null) map['fee'] = fee;
-    if (duration != null) map['duration'] = duration;
-    if (appointmentDate != null) map['appointmentDate'] = appointmentDate; // DateTime ok
-    return map;
   }
 
   Service copyWith({
