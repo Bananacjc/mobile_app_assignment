@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app_assignment/model/global_user.dart';
 import 'package:mobile_app_assignment/model/service.dart';
 import 'package:mobile_app_assignment/services/service_service.dart';
 import 'package:provider/provider.dart';
@@ -19,7 +20,7 @@ class ServiceView extends StatefulWidget {
 
 class _ServiceViewState extends State<ServiceView> {
   final ServiceService ss = ServiceService();
-  final String userId = "7K3cULYkj8PPQCjDrxv6drIel3b2";
+  final String userId = GlobalUser.user!.uid;
   String upcomingCount = "";
   String inProgressCount = "";
   String completedCount = "";
@@ -309,9 +310,9 @@ class _ServiceViewState extends State<ServiceView> {
           child: FloatingActionButton(
             backgroundColor: AppColor.primaryGreen,
             onPressed: () async {
-              // navigationProvider.showFullPageContent(
-              //   BasePage(child: BookServiceView()),
-              // );
+              navigationProvider.showFullPageContent(
+                BookServiceView(),
+              );
             },
             child: const Icon(Icons.add, size: 32, color: AppColor.softWhite),
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:mobile_app_assignment/services/vehicle_service.dart';
 
 import '../core/theme/app_colors.dart';
 import '../widgets/navbar_widget.dart';
@@ -12,6 +13,13 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
+  final VehicleService vs = VehicleService();
+  final String userId = GlobalUser.user?.uid ?? "7K3cULYkj8PPQCjDrxv6drIel3b2"; // delete default and !
+
+  void loadData() async {
+    final vehicles = await vs.getAllVehicle(userId);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -328,7 +336,21 @@ class _HomeViewState extends State<HomeView> {
                             ),
                           ),
                           ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              showModalBottomSheet(
+                                context: context,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                                ),
+                                builder: (context) {
+                                  return Container(
+                                    padding: EdgeInsets.all(20),
+                                    height: 500,
+                                    child: Center(child: Text("This is a bottom sheet overlay")),
+                                  );
+                                },
+                              );
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColor.softWhite,
                               shape: RoundedRectangleBorder(

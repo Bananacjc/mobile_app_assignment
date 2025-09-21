@@ -20,8 +20,29 @@ class VehicleService {
 
   Future<List<String>> getAllPlateNo(String id) async{
     try {
-      final querySnapshot = await _vehiclesCollection.get();
+      final querySnapshot = await _vehiclesCollection.where('userId', isEqualTo: id).get();
       return querySnapshot.docs.map((doc) => doc.id ?? '').toList();
+    } catch(e) {
+      print("Error fetching all plate no. :$e");
+      return [];
+    }
+  }
+
+  Future<List<Vehicle>> getAllVehicle(String id) async{
+    try {
+      final querySnapshot = await _vehiclesCollection.where('userId', isEqualTo: id).get();
+      final vehicles = querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        print(data);
+        return Vehicle(
+            plateNo: doc.id,
+            userId: data.userId,
+            brand: data.brand,
+            model: data.model,
+            color: data.color
+        );
+      }).toList();
+      return vehicles;
     } catch(e) {
       print("Error fetching all plate no. :$e");
       return [];

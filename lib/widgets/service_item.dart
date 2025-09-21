@@ -12,7 +12,7 @@ import '../provider/navigation_provider.dart';
 
 class ServiceItem extends StatefulWidget {
   final Service service;
-  final bool inProgress;
+  final bool? inProgress;
 
   const ServiceItem({super.key, required this.service, required this.inProgress});
 
@@ -36,6 +36,9 @@ class _ServiceItemState extends State<ServiceItem> {
   String? feeDisplay;
   int buttonDisplay = 2;
   String? buttonName = "";
+  double defaultWidth = 360;
+  double defaultHeight = 170;
+
 
   @override
   void initState() {
@@ -49,17 +52,19 @@ class _ServiceItemState extends State<ServiceItem> {
         ? widget.service.appointmentDate!.add(Duration(minutes: widget.service.duration!))
         : null;
     // if(now.isAfter(widget.service.appointmentDate!) && now.isBefore(endAppointment)){ // change to boolean check only
-    if (widget.inProgress) {
+    topRightCornerDisplay = DateFormat("dd MMM yyyy, h:mm a")
+        .format(widget.service.appointmentDate!.toUtc().add(const Duration(hours: 8)));
+
+    if (widget.inProgress == true) {
       topRightCornerDisplay = serviceStatus[widget.service.status]; // display status instead of time
-      if (widget.inProgress && widget.service.status != "pending") {
+
+      if (widget.service.status != "pending") {
         buttonDisplay = 1;
       }
-    } else {
-      topRightCornerDisplay = DateFormat("dd MMM yyyy, h:mm a").format(widget.service.appointmentDate!);
-    }
 
-    if (widget.inProgress) {
-      middleLeftDisplay = "ETA ${DateFormat.jm().format(endAppointment!)}";
+      // middle-left display logic
+      middleLeftDisplay = "ETA ${DateFormat.jm().format(endAppointment!.toUtc().add(const Duration(hours: 8)))}";
+
       if (widget.service.status == "pending") {
         buttonName = "Pay";
         middleLeftDisplay = "";
@@ -67,16 +72,15 @@ class _ServiceItemState extends State<ServiceItem> {
         feeDisplay = "";
         middleLeftDisplay = "";
       }
-    } else {
+
+    } else if (widget.inProgress == false) {
       if (widget.service.status != "completed") {
-        if (widget.service.duration != null && widget.service.duration != 0) {
-          middleLeftDisplay = "Duration: ${Tool().formatDuration(widget.service.duration!)}";
-        }
         buttonName = "Reschedule";
         feeDisplay = "";
       } else {
         isFeedback(widget.service.serviceId).then((hadFeedback) {
           setState(() {
+            print(hadFeedback);
             if (hadFeedback) {
               buttonDisplay = 1;
             } else {
@@ -85,6 +89,10 @@ class _ServiceItemState extends State<ServiceItem> {
           });
         });
       }
+
+    } else {
+      buttonDisplay = 0;
+      defaultHeight = 115;
     }
   }
 
@@ -102,8 +110,8 @@ class _ServiceItemState extends State<ServiceItem> {
     return false;
   }
 
-  Widget buttonRow(VoidCallback? action) {
-    if (buttonDisplay == 2) {
+  Widget? buttonRow(VoidCallback? action) {
+    if (buttonDisplay >= 2) {
       // pay/reschedule/feedback
       return Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -112,7 +120,7 @@ class _ServiceItemState extends State<ServiceItem> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColor.primaryGreen,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              minimumSize: Size(165, 40),
+              minimumSize: Size(165,40),
             ),
             onPressed: action,
             child: Text(buttonName!, style: TextStyle(color: AppColor.softWhite)),
@@ -131,7 +139,7 @@ class _ServiceItemState extends State<ServiceItem> {
           ),
         ],
       );
-    } else {
+    } else if (buttonDisplay == 1) {
       return ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColor.softWhite,
@@ -144,6 +152,8 @@ class _ServiceItemState extends State<ServiceItem> {
         onPressed: () {},
         child: Text("View Details", style: TextStyle(color: AppColor.darkCharcoal)),
       );
+    } else { // buttonDisplay == 0
+      return null;
     }
   }
 
@@ -151,12 +161,12 @@ class _ServiceItemState extends State<ServiceItem> {
   Widget build(BuildContext context) {
     final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
     final Map<String, VoidCallback> actions = {
-      "pay": () => Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentView())),
+      "pay": () => Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentView(service: widget.service,))),
       // "reschedule": () => Navigator.push(
       //   context,
       //   MaterialPageRoute(builder: (_) => RescheduleView()),
       // ),
-      "feedback": () => Navigator.push(context, MaterialPageRoute(builder: (context) => FeedbackView())),
+      "feedback": () => Navigator.push(context, MaterialPageRoute(builder: (context) => FeedbackView(service: widget.service,))),
     };
     return Padding(
       padding: EdgeInsets.only(bottom: 20),
@@ -166,8 +176,8 @@ class _ServiceItemState extends State<ServiceItem> {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [BoxShadow(color: AppColor.darkCharcoal.withAlpha(63), blurRadius: 10, offset: const Offset(0, 0))],
         ),
-        width: 360,
-        height: 170,
+        width: defaultWidth,
+        height: defaultHeight,
         child: Column(
           children: [
             Row(
