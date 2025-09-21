@@ -34,6 +34,20 @@ class _ServiceItemState extends State<ServiceItem> {
     'completed': "Service Completed",
   };
 
+  final Map<String, IconData> categoriesIcons = {
+    "Brake Service": Icons.car_repair_rounded,
+    "Engine Diagnostics":Icons.handyman_rounded,
+    "Battery Replacement":Icons.battery_5_bar_rounded,
+    "Air Conditioning Service":Icons.air_rounded,
+    "Tire Replacement":Icons.album_rounded,
+    "Suspension Inspection":Icons.find_replace_rounded,
+    "Transmission Service":Icons.settings_rounded,
+    "Radiator & Cooling System":Icons.air_rounded,
+    "Power Steering Service":Icons.settings_input_svideo_rounded,
+    "Wiper Replacement":Icons.water_drop_rounded,
+    "Headlight/Taillight Replacement":Icons.lightbulb_rounded,
+};
+
   String serviceTitle = "";
   String? topRightCornerDisplay;
   String plateNoDisplay = "N/A";
@@ -359,7 +373,7 @@ class _ServiceItemState extends State<ServiceItem> {
                 Expanded(
                   child: Row(
                     children: [
-                      const Padding(
+                       Padding(
                         padding: EdgeInsets.only(left: 10, top: 10),
                         child: SizedBox(
                           width: 50,
@@ -372,7 +386,7 @@ class _ServiceItemState extends State<ServiceItem> {
                               ),
                             ),
                             child: Icon(
-                              Icons.add,
+                              categoriesIcons[serviceTitle],
                               color: AppColor.softWhite,
                               size: 36,
                             ),

@@ -2,9 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mobile_app_assignment/model/reminder.dart';
 
 class ReminderService {
-  final CollectionReference<Reminder> _remindersCollection = FirebaseFirestore.instance
-      .collection('reminders')
-      .withConverter(fromFirestore: Reminder.fromFirestore, toFirestore: (Reminder reminder, _) => reminder.toFirestore());
+  final CollectionReference<Reminder> _remindersCollection =
+      FirebaseFirestore.instance
+          .collection('reminders')
+          .withConverter<Reminder>(
+            fromFirestore: Reminder.fromFirestore,
+            toFirestore: (r, _) => r.toFirestore(),
+          );
 
   Future<DocumentReference<Reminder>?> addReminder(Reminder reminder) async {
     try {
@@ -16,15 +20,18 @@ class ReminderService {
   }
 
   Future<bool> updateReminder(Reminder reminder) async {
-    try{
-      final querySnapshot = await _remindersCollection
+    try {
+      final qs = await _remindersCollection
           .where('userId', isEqualTo: reminder.userId)
+          .where('plateNo', isEqualTo: reminder.plateNo)
           .where('type', isEqualTo: reminder.type)
           .limit(1)
           .get();
 
-      if(querySnapshot.docs.isNotEmpty){
-        await _remindersCollection.doc(querySnapshot.docs[0].id).set(reminder, SetOptions(merge: true));
+      if (qs.docs.isNotEmpty) {
+        await _remindersCollection
+            .doc(qs.docs.first.id)
+            .set(reminder, SetOptions(merge: true));
         return true;
       }
     } catch (e) {
@@ -34,40 +41,45 @@ class ReminderService {
   }
 
   Future<List<Reminder>> getAllReminder(String userId) async {
-    try{
-      final querySnapshot = await _remindersCollection.where('userId', isEqualTo: userId).get();
-      if(querySnapshot.docs.isNotEmpty){
-        return querySnapshot.docs.map((doc) => doc.data()).toList();
-      }
+    try {
+      final qs =
+          await _remindersCollection.where('userId', isEqualTo: userId).get();
+      return qs.docs.map((d) => d.data()).toList();
     } catch (e) {
       print("Error fetching reminders: $e");
     }
     return [];
   }
 
-  Future<bool> deleteReminder(String userId, String type) async {
-    try{
-      final reminder = await _remindersCollection
+  Future<bool> deleteReminder(String userId, String plateNo, String type) async {
+    try {
+      final qs = await _remindersCollection
           .where('userId', isEqualTo: userId)
+          .where('plateNo', isEqualTo: plateNo)
           .where('type', isEqualTo: type)
-          .limit(1).get();
-      await reminder.docs[0].reference.delete();
-      return true;
+          .limit(1)
+          .get();
+      if (qs.docs.isNotEmpty) {
+        await qs.docs.first.reference.delete();
+        return true;
+      }
     } catch (e) {
       print("Error deleting reminder: $e");
     }
     return false;
   }
 
-  Future<Reminder?> getReminder(String userId, String type) async {
-    try{
-      final reminder = await _remindersCollection
+  Future<Reminder?> getReminder(String userId, String plateNo, String type) async {
+    try {
+      final qs = await _remindersCollection
           .where('userId', isEqualTo: userId)
+          .where('plateNo', isEqualTo: plateNo) // NEW
           .where('type', isEqualTo: type)
-          .limit(1).get();
-      return reminder.docs[0].data();
+          .limit(1)
+          .get();
+      return qs.docs.isNotEmpty ? qs.docs.first.data() : null;
     } catch (e) {
-      print("Error deleting reminder: $e");
+      print("Error getting reminder: $e");
     }
     return null;
   }
