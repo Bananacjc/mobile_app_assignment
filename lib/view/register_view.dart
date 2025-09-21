@@ -57,8 +57,17 @@ class _RegisterViewState extends State<RegisterView> {
       );
 
       if (user != null) {
+        // ✅ Update FirebaseAuth profile with full name
+        final fullName =
+            "${_firstNameController.text.trim()} ${_lastNameController.text.trim()}";
+        await user.updateDisplayName(fullName);
+        await user.reload(); // reload so it reflects immediately
+
+        // refresh user reference
+        final updatedUser = FirebaseAuth.instance.currentUser;
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("✅ Account created successfully")),
+          SnackBar(content: Text("✅ Account created: ${updatedUser?.displayName}")),
         );
 
         // Navigate to login page
