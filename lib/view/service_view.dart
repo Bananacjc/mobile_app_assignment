@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app_assignment/model/global_user.dart';
 import 'package:mobile_app_assignment/model/service.dart';
-import 'package:mobile_app_assignment/services/service_service.dart';
+import '../services/service_service.dart';
 import 'package:provider/provider.dart';
 import '../core/theme/app_colors.dart';
 import '../model/user.dart';

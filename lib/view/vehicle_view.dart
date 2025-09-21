@@ -8,6 +8,9 @@ import '../model/global_user.dart';
 import '../services/vehicle_service.dart';
 import '../provider/navigation_provider.dart';
 
+// 👇 add this import
+import 'custom_widgets/ui_helper.dart';
+
 class VehicleView extends StatelessWidget {
   VehicleView({super.key});
 
@@ -81,9 +84,7 @@ class VehicleView extends StatelessWidget {
                         if (ok != true) return;
                         await _service.deleteVehicle(v.plateNo); // using plateNo as key
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Vehicle deleted')),
-                          );
+                          UiHelper.showSnackBar(context, 'Vehicle deleted', isError: false);
                         }
                       },
                     );
@@ -98,7 +99,7 @@ class VehicleView extends StatelessWidget {
   void _openVehicleForm(BuildContext context, {Vehicle? vehicle}) {
     final uid = GlobalUser.user?.uid;
     if (uid == null || uid.isEmpty) {
-      _toast(context, 'No logged-in user');
+      UiHelper.showSnackBar(context, 'No logged-in user');
       return;
     }
 
@@ -146,9 +147,10 @@ class VehicleView extends StatelessWidget {
                 setModalState(() => saving = true);
 
                 if (vehicle == null) {
-                  // Add (upsert). If you want to block duplicates, add an exists check here.
                   await VehicleService().addOrUpdateVehicle(payload);
-                  if (context.mounted) _toast(context, 'Vehicle saved');
+                  if (context.mounted) {
+                    UiHelper.showSnackBar(context, 'Vehicle saved', isError: false);
+                  }
                 } else {
                   final oldPlate = vehicle.plateNo.toUpperCase();
                   if (oldPlate != newPlate) {
@@ -156,13 +158,15 @@ class VehicleView extends StatelessWidget {
                   } else {
                     await VehicleService().addOrUpdateVehicle(payload);
                   }
-                  if (context.mounted) _toast(context, 'Vehicle updated');
+                  if (context.mounted) {
+                    UiHelper.showSnackBar(context, 'Vehicle updated', isError: false);
+                  }
                 }
 
                 if (Navigator.canPop(ctx)) Navigator.pop(ctx);
               } catch (e) {
                 if (context.mounted) {
-                  _toast(context, 'Save failed: $e');
+                  UiHelper.showSnackBar(context, 'Save failed: $e');
                 }
               } finally {
                 if (ctx.mounted) setModalState(() => saving = false);
@@ -370,10 +374,7 @@ class VehicleView extends StatelessWidget {
       ),
     );
   }
-
-  static void _toast(BuildContext context, String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-  }
+  // ❌ removed _toast
 }
 
 // ---------- EMPTY STATE WIDGET ----------
