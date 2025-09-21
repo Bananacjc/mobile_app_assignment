@@ -313,7 +313,6 @@ class _ServiceViewState extends State<ServiceView> {
               // navigationProvider.showFullPageContent(
               //   BasePage(child: BookServiceView()),
               // );
-              await ss.getInProgressServices(userId);
             },
             child: const Icon(Icons.add, size: 32, color: AppColor.softWhite),
           ),
