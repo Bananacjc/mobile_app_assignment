@@ -309,10 +309,10 @@ class _ServiceViewState extends State<ServiceView> {
           child: FloatingActionButton(
             backgroundColor: AppColor.primaryGreen,
             onPressed: () async {
-              // navigationProvider.showFullPageContent(
-              //   BasePage(child: BookServiceView()),
-              // );
-              await ss.getInProgressServices(userId);
+              navigationProvider.showFullPageContent(
+                BookServiceView(),
+              );
+              // await ss.getInProgressServices(userId);
             },
             child: const Icon(Icons.add, size: 32, color: AppColor.softWhite),
           ),

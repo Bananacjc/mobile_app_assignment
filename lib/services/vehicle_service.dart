@@ -1,67 +1,56 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:mobile_app_assignment/model/vehicle.dart';
+import '../model/vehicle.dart';
 
 class VehicleService {
-  final CollectionReference<Vehicle> _vehiclesCollection = FirebaseFirestore.instance
-      .collection('vehicles')
-      .withConverter(fromFirestore: Vehicle.fromFirestore, toFirestore: (Vehicle vehicle, _) => vehicle.toFirestore());
+  // Typed collection with converters
+  final CollectionReference<Vehicle> _vehicles =
+      FirebaseFirestore.instance
+          .collection('vehicles')
+          .withConverter<Vehicle>(
+            fromFirestore: Vehicle.fromFirestore,
+            toFirestore: (Vehicle v, _) => v.toFirestore(),
+          );
 
-  Future<DocumentReference<Vehicle>?> addVehicle(Vehicle vehicle) async{
-    try{
-      print("Vehicle successfully added.");
-      final doc = _vehiclesCollection.doc(vehicle.plateNo); // set plateNo as doc id
-      await doc.set(vehicle);
-      return doc;
-    } catch (e) {
-      print("Error adding vehicle: $e");
-      return null;
-    }
+  /// Live stream of this user's vehicles (updates in real time)
+  Stream<List<Vehicle>> streamUserVehicles(String userId) {
+    return _vehicles
+        .where('userId', isEqualTo: userId)
+        .orderBy('plateNo')
+        .snapshots()
+        .map((snap) => snap.docs.map((d) => d.data()).toList());
   }
 
-  Future<List<String>> getAllPlateNo(String id) async{
-    try {
-      final querySnapshot = await _vehiclesCollection.get();
-      return querySnapshot.docs.map((doc) => doc.id ?? '').toList();
-    } catch(e) {
-      print("Error fetching all plate no. :$e");
-      return [];
-    }
+  /// Add a vehicle and assign a generated vehicleId
+  Future<void> addVehicle(Vehicle v) async {
+    // Pre-create a doc so we can set vehicleId == doc.id
+    final docRef = _vehicles.doc();
+    final withId = Vehicle(
+      vehicleId: docRef.id,
+      userId: v.userId,
+      plateNo: v.plateNo,
+      brand: v.brand,
+      model: v.model,
+      color: v.color, // hex string like "#1E90FF"
+    );
+    await docRef.set(withId);
   }
 
-  Future<Vehicle?> getVehicle(String plateNo) async {
-    try{
-      final querySnapshot = await _vehiclesCollection.doc(plateNo).get();
-      if(querySnapshot.exists){
-        return querySnapshot.data();
-      }
-      return null;
-    } catch(e) {
-      print("Error fetching vehicle. :$e");
-      rethrow;
+  /// Update (merge) an existing vehicle by its vehicleId
+  Future<void> updateVehicle(Vehicle v) async {
+    if (v.vehicleId.isEmpty) {
+      throw ArgumentError('vehicleId is required for updateVehicle');
     }
+    await _vehicles.doc(v.vehicleId).set(v, SetOptions(merge: true));
   }
 
-  Future<bool> updateVehicle(Vehicle vehicle) async {
-    try{
-      final querySnapshot = await _vehiclesCollection.doc(vehicle.plateNo).get();
-      if (querySnapshot.exists){
-        await _vehiclesCollection.doc(vehicle.plateNo).set(vehicle,SetOptions(merge: true));
-        return true;
-      }
-      return false;
-    } catch(e) {
-      print("Error updating vehicle $e");
-      rethrow;
-    }
+  /// Delete by vehicleId
+  Future<void> deleteVehicle(String vehicleId) async {
+    await _vehicles.doc(vehicleId).delete();
   }
 
-  Future<bool> deleteVehicle(String plateNo) async {
-    try{
-      await _vehiclesCollection.doc(plateNo).delete();
-      return true;
-    } catch(e) {
-      print("Error deleting vehicle $e");
-      return false;
-    }
+  /// (Optional) one-time fetch (not streamed)
+  Future<List<Vehicle>> getUserVehiclesOnce(String userId) async {
+    final snap = await _vehicles.where('userId', isEqualTo: userId).get();
+    return snap.docs.map((d) => d.data()).toList();
   }
 }
