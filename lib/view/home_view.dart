@@ -54,6 +54,20 @@ class _HomeViewState extends State<HomeView> {
     "Headlight/Taillight Replacement",
   ];
 
+  final Map<String, IconData> categoriesIcons = {
+    "Brake Service": Icons.car_repair_rounded,
+    "Engine Diagnostics":Icons.handyman_rounded,
+    "Battery Replacement":Icons.battery_5_bar_rounded,
+    "Air Conditioning Service":Icons.air_rounded,
+    "Tire Replacement":Icons.album_rounded,
+    "Suspension Inspection":Icons.find_replace_rounded,
+    "Transmission Service":Icons.settings_rounded,
+    "Radiator & Cooling System":Icons.air_rounded,
+    "Power Steering Service":Icons.settings_input_svideo_rounded,
+    "Wiper Replacement":Icons.water_drop_rounded,
+    "Headlight/Taillight Replacement":Icons.lightbulb_rounded,
+  };
+
   // ---------- helpers (same style as BookServiceView) ----------
   Color _fromHex(String hex) {
     final c = hex.replaceAll('#', '');
@@ -155,7 +169,7 @@ class _HomeViewState extends State<HomeView> {
                       color: accent,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.settings_rounded,
+                    child: Icon(categoriesIcons[category],
                         color: Colors.white, size: 32),
                   ),
                   const SizedBox(width: 10),
@@ -601,7 +615,7 @@ class _HomeViewState extends State<HomeView> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    "Welcome, ${user?.email ?? 'Guest'}",
+                    "Welcome, ${user?.displayName ?? 'Guest'}",
                     style: const TextStyle(
                       color: AppColor.softWhite,
                       fontWeight: FontWeight.bold,
