@@ -89,7 +89,7 @@ class _ServiceItemState extends State<ServiceItem> {
       // Middle-left = ETA (end time) when available
       if (endAppointment != null) {
         middleLeftDisplay =
-            "ETA ${DateFormat.jm().format(endAppointment.toLocal())}";
+        "ETA ${DateFormat.jm().format(endAppointment.toLocal())}";
       } else {
         middleLeftDisplay = "";
       }
@@ -102,7 +102,6 @@ class _ServiceItemState extends State<ServiceItem> {
         feeDisplay = "";
         middleLeftDisplay = "";
       }
-
     } else if (widget.inProgress == false) {
       // Upcoming / scheduled card
       if ((widget.service.status ?? '') != "completed") {
@@ -121,7 +120,6 @@ class _ServiceItemState extends State<ServiceItem> {
           });
         });
       }
-
     } else {
       // History / no actions
       buttonDisplay = 0;
@@ -287,8 +285,6 @@ class _ServiceItemState extends State<ServiceItem> {
           style: TextStyle(color: AppColor.darkCharcoal),
         ),
       );
-    } else { // buttonDisplay == 0
-      return null;
     }
 
     // No buttons to show
@@ -305,33 +301,19 @@ class _ServiceItemState extends State<ServiceItem> {
   @override
   Widget build(BuildContext context) {
     final Map<String, VoidCallback> actions = {
-      "pay": () async {
-        final result = Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => PaymentView(service: widget.service),
-          ),
-        );
-        if (result == true) {
-          setState(() {
-            buttonDisplay = 1; // Hide button row
-          });
-        }
-      },
-      "feedback": () async {
-        final result = await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => FeedbackView(service: widget.service),
-          ),
-        );
-
-        if (result == true) {
-          setState(() {
-            buttonDisplay = 1; // Hide button row
-          });
-        }
-      },
+      "pay": () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentView(service: widget.service),
+        ),
+      ),
+      "reschedule": _reschedule,
+      "feedback": () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FeedbackView(service: widget.service),
+        ),
+      ),
     };
 
     return Padding(
@@ -444,7 +426,6 @@ class _ServiceItemState extends State<ServiceItem> {
                 ),
               ],
             ),
-
             Divider(
               indent: 10,
               endIndent: 10,

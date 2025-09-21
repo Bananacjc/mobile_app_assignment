@@ -22,6 +22,7 @@ Future<void> main() async {
   await dotenv.load(fileName: ".env");
   await _stripeSetup();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  FirebaseAuth.instance.setLanguageCode('en');
   runApp(const MyApp());
 }
 
